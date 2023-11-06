@@ -11,7 +11,7 @@ output:
   word_document:
     toc: no
 ---
-
+https://github.com/cclyfblink/Biostatistics_Final_Project_Group_4
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(message = FALSE)
