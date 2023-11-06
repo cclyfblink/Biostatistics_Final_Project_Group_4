@@ -1,0 +1,32 @@
+---
+title: "Final Project Group 4"
+author: "Hanbo Dong, Huiye Han, Yifan Lu, Zhuoran Li"
+output:
+  html_document:
+    fig_height: 4.5
+    fig_width: 8
+  pdf_document:
+    fig_height: 3.5
+    fig_width: 3.5
+  word_document:
+    toc: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+```{r}
+## load in the required libraries 
+library(tidyverse)
+
+## disable scientific notation
+options(scipen = 999)
+```
+
+```{r}
+# load the data
+load("brfss2013.RData")
+```
+
