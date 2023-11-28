@@ -19,6 +19,7 @@ library(tidyverse)
 library(tidymodels)
 library(janitor)
 library(tableone)
+library(here)
 ```
 
 ```{r}
@@ -48,7 +49,7 @@ skimr::skim(brfss_sleep_mental)
 brfss_sleep_mental_omit <- na.omit(brfss_sleep_mental)
 head(brfss_sleep_mental_omit)
 skimr::skim(brfss_sleep_mental_omit)
-write.csv(brfss_sleep_mental_omit, file = "/Users/hehehe/Desktop/brfss_sleep_mental_omit.csv")
+write.csv(brfss_sleep_mental_omit, file = here("brfss_sleep_mental_omit.csv"))
 ```
 ```{r}
 # 根据人口年龄创建adult，是否是成年人（1:成年人， 0:大于65的老年人）
@@ -68,7 +69,7 @@ head(brfss_sleep_mental_older_adults)
 
 brfss_sleep_mental <- rbind(brfss_sleep_mental_adult, brfss_sleep_mental_older_adults)
 head(brfss_sleep_mental)
-write.csv(brfss_sleep_mental, file = "/Users/hehehe/Desktop/brfss_sleep_mental.csv")
+write.csv(brfss_sleep_mental, file = here("brfss_sleep_mental.csv"))
 ```
 ```{r}
 # factors <- tolower(c("SLEPTIM1",  "X_AGE65YR", "MISNERVS", "MISHOPLS", "MISRSTLS", "MISDEPRD", 
