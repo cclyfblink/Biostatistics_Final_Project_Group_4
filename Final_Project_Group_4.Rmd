@@ -13,11 +13,7 @@ output:
 ---
 https://github.com/cclyfblink/Biostatistics_Final_Project_Group_4
 ---
-title: "Untitled"
-author: "Huiye Han"
-date: "2023-11-11"
-output: html_document
----
+
 ```{r, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(tidymodels)
@@ -39,7 +35,7 @@ head(brfss2013)
 # 筛选factor
 factors <- tolower(c("SLEPTIM1",  "X_AGE65YR", "MISNERVS", "MISHOPLS", "MISRSTLS", "MISDEPRD", 
                "MISEFFRT", "MISWTLES", "MISNOWRK", "MISTMNT", "MISTRHLP", 
-               "MISPHLPF", "EMTSUPRT", "LSATISFY"))
+               "MISPHLPF", "EMTSUPRT", "LSATISFY", "SEX", "EDUCA"))
 
 brfss_sleep_mental <- brfss2013 %>%
   select(factors)
@@ -52,6 +48,7 @@ skimr::skim(brfss_sleep_mental)
 brfss_sleep_mental_omit <- na.omit(brfss_sleep_mental)
 head(brfss_sleep_mental_omit)
 skimr::skim(brfss_sleep_mental_omit)
+write.csv(brfss_sleep_mental_omit, file = "/Users/hehehe/Desktop/brfss_sleep_mental_omit.csv")
 ```
 ```{r}
 # 根据人口年龄创建adult，是否是成年人（1:成年人， 0:大于65的老年人）
@@ -70,14 +67,15 @@ brfss_sleep_mental_older_adults <- brfss_sleep_mental_omit %>%
 head(brfss_sleep_mental_older_adults)
 
 brfss_sleep_mental <- rbind(brfss_sleep_mental_adult, brfss_sleep_mental_older_adults)
-head(brfss_sleep_mental) 
+head(brfss_sleep_mental)
+write.csv(brfss_sleep_mental, file = "/Users/hehehe/Desktop/brfss_sleep_mental.csv")
 ```
 ```{r}
 # factors <- tolower(c("SLEPTIM1",  "X_AGE65YR", "MISNERVS", "MISHOPLS", "MISRSTLS", "MISDEPRD", 
 #                "MISEFFRT", "MISWTLES", "MISNOWRK", "MISTMNT", "MISTRHLP", 
-#                "MISPHLPF", "EMTSUPRT", "LSATISFY"))
+#                "MISPHLPF", "EMTSUPRT", "LSATISFY", "SEX", "EDUCA"))
 
-factor <- c("misnervs", "mishopls", "misrstls", "misdeprd", "miseffrt",  "miswtles", "misnowrk", "mistmnt", "mistrhlp", "misphlpf", "emtsuprt", "lsatisfy", "adult")
+factor <- c("misnervs", "mishopls", "misrstls", "misdeprd", "miseffrt",  "miswtles", "misnowrk", "mistmnt", "mistrhlp", "misphlpf", "emtsuprt", "lsatisfy", "adult", "sex", "educa")
 
 table <- CreateTableOne(vars = factor,
                strata = "sleep_well",
@@ -89,615 +87,189 @@ table
 summary(table)
 ```
 
+# 社会人口学
+## sex
+**sex的t检验和chisq矛盾了，问TA**
+```{r}
+sex_counts <- table(brfss_sleep_mental$sex)
+sex_counts
+```
+
+```{r}
+# sleep_well 在不同性别下的分布
+ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(sex))) + 
+  geom_bar(position="stack") +
+  labs(title="Sleep Well Distribution by Gender", x="Sleep Well", y="Frequency") +
+  scale_fill_discrete(name="Gender")
+```
+```{r}
+# T-test for sleep time between sexes
+t.test(sleptim1 ~ sex, data = brfss_sleep_mental)
+```
+**睡眠平均时长在男女间没明显差异，接下来看
+```{r}
+xtabs(~ sleep_well + sex, data = brfss_sleep_mental)
+
+data.mat <- matrix(c(388,7888, 1798, 3024), byrow=TRUE, nrow=2)
+data.mat
+
+expected <- chisq.test(data.mat)$expected
+expected
+```
+**Two overall tests.None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
+```{r}
+data.mat <- matrix(c(388,7888, 1798, 3024), byrow=TRUE, nrow=2)
+chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
+chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
+```
 
 
 
-Show in New Window
-Description:df [6 × 14]
- 
- 
-sleptim1
-<int>
-x_age65yr
-<fctr>
-misnervs
-<fctr>
-mishopls
-<fctr>
-misrstls
-<fctr>
-1	NA	Age 18 to 64	Some	Some	Some	
-2	6	Age 18 to 64	A little	None	None	
-3	9	Age 18 to 64	None	None	None	
-4	8	Age 18 to 64	A little	None	Some	
-5	6	Age 65 or older	NA	NA	NA	
-6	8	Age 18 to 64	NA	NA	NA	
-6 rows | 1-6 of 14 columns
-data.frame
-6 x 14
-── Data Summary ────────────────────────
-                           Values            
-Name                       brfss_sleep_mental
-Number of rows             491775            
-Number of columns          14                
-_______________________                      
-Column type frequency:                       
-  factor                   12                
-  numeric                  2                 
-________________________                     
-Group variables            None              
-R Console
-A tibble:12 × 6
- 
- 
-skim_variable
-<chr>
-n_missing
-<int>
-complete_rate
-<dbl>
-ordered
-<lgl>
-n_unique
-<int>
-1	x_age65yr	4732	0.99037771	FALSE	2	
-2	misnervs	455630	0.07349906	FALSE	5	
-3	mishopls	455615	0.07352956	FALSE	5	
-4	misrstls	455738	0.07327945	FALSE	5	
-5	misdeprd	455669	0.07341975	FALSE	5	
-6	miseffrt	455915	0.07291953	FALSE	5	
-7	miswtles	455728	0.07329978	FALSE	5	
-8	mistmnt	455781	0.07319201	FALSE	2	
-9	mistrhlp	457246	0.07021300	FALSE	5	
-10	misphlpf	457333	0.07003609	FALSE	5	
-1-10 of 12 rows | 1-6 of 6 columns
-one_skim_df
-12 x 6
-A tibble:2 × 11
- 
- 
-skim_variable
-<chr>
-n_missing
-<int>
-complete_rate
-<dbl>
-mean
-<dbl>
-sd
-<dbl>
-1	sleptim1	7387	0.98497890	7.052099	1.604110	
-2	misnowrk	455863	0.07302527	1.038594	4.592384	
-2 rows | 1-6 of 11 columns
-one_skim_df
-2 x 11
-A tibble:2 × 11
- 
- 
-skim_variable
-<chr>
-n_missing
-<int>
-complete_rate
-<dbl>
-mean
-<dbl>
-sd
-<dbl>
-p0
-<dbl>
-p25
-<dbl>
-p50
-<dbl>
-p75
-<dbl>
-1	sleptim1	7387	0.98497890	7.052099	1.604110	0	6	7	8	
-2	misnowrk	455863	0.07302527	1.038594	4.592384	0	0	0	0	
-2 rows | 1-10 of 11 columns
-Show in New Window
-Description:df [6 × 14]
- 
- 
-sleptim1
-<int>
-x_age65yr
-<fctr>
-misnervs
-<fctr>
-mishopls
-<fctr>
-misrstls
-<fctr>
-2	6	Age 18 to 64	A little	None	None	
-3	9	Age 18 to 64	None	None	None	
-4	8	Age 18 to 64	A little	None	Some	
-73	6	Age 65 or older	Some	None	Some	
-74	7	Age 65 or older	Some	None	None	
-76	7	Age 65 or older	None	None	None	
-6 rows | 1-6 of 14 columns
-data.frame
-6 x 14
-── Data Summary ────────────────────────
-                           Values                 
-Name                       brfss_sleep_mental_omit
-Number of rows             4380                   
-Number of columns          14                     
-_______________________                           
-Column type frequency:                            
-  factor                   12                     
-  numeric                  2                      
-________________________                          
-Group variables            None                   
-R Console
-A tibble:12 × 6
- 
- 
-skim_variable
-<chr>
-n_missing
-<int>
-complete_rate
-<dbl>
-ordered
-<lgl>
-n_unique
-<int>
-1	x_age65yr	0	1	FALSE	2	
-2	misnervs	0	1	FALSE	5	
-3	mishopls	0	1	FALSE	5	
-4	misrstls	0	1	FALSE	5	
-5	misdeprd	0	1	FALSE	5	
-6	miseffrt	0	1	FALSE	5	
-7	miswtles	0	1	FALSE	5	
-8	mistmnt	0	1	FALSE	2	
-9	mistrhlp	0	1	FALSE	5	
-10	misphlpf	0	1	FALSE	5	
-1-10 of 12 rows | 1-6 of 6 columns
-one_skim_df
-12 x 6
-A tibble:2 × 11
- 
- 
-skim_variable
-<chr>
-n_missing
-<int>
-complete_rate
-<dbl>
-mean
-<dbl>
-sd
-<dbl>
-1	sleptim1	0	1	6.990639	1.541140	
-2	misnowrk	0	1	1.469863	5.352882	
-2 rows | 1-6 of 11 columns
-one_skim_df
-2 x 11
-A tibble:2 × 11
- 
- 
-skim_variable
-<chr>
-n_missing
-<int>
-complete_rate
-<dbl>
-mean
-<dbl>
-sd
-<dbl>
-p0
-<dbl>
-p25
-<dbl>
-p50
-<dbl>
-p75
-<dbl>
-1	sleptim1	0	1	6.990639	1.541140	1	6	7	8	
-2	misnowrk	0	1	1.469863	5.352882	0	0	0	0	
-2 rows | 1-10 of 11 columns
-Show in New Window
-Description:df [6 × 330]
- 
- 
-x_state
-<fctr>
-fmonth
-<fctr>
-idate
-<int>
-imonth
-<fctr>
-iday
-<fctr>
-iyear
-<fctr>
-dispcode
-<fctr>
-seqno
-<int>
-x_psu
-<int>
-1	Alabama	January	1092013	January	9	2013	Completed interview	2013000580	2013000580	
-2	Alabama	January	1192013	January	19	2013	Completed interview	2013000593	2013000593	
-3	Alabama	January	1192013	January	19	2013	Completed interview	2013000600	2013000600	
-4	Alabama	January	1112013	January	11	2013	Completed interview	2013000606	2013000606	
-5	Alabama	February	2062013	February	6	2013	Completed interview	2013000608	2013000608	
-6	Alabama	March	3272013	March	27	2013	Completed interview	2013000630	2013000630	
-6 rows | 1-10 of 330 columns
-Show in New Window
-Description:df [6 × 16]
- 
- 
-sleptim1
-<int>
-x_age65yr
-<fctr>
-misnervs
-<fctr>
-mishopls
-<fctr>
-misrstls
-<fctr>
-1	6	Age 18 to 64	A little	None	None	
-2	9	Age 18 to 64	None	None	None	
-3	8	Age 18 to 64	A little	None	Some	
-4	6	Age 18 to 64	Most	None	Most	
-5	7	Age 18 to 64	None	None	None	
-6	5	Age 18 to 64	None	None	None	
-6 rows | 1-6 of 16 columns
-data.frame
-6 x 16
-Description:df [6 × 16]
- 
- 
-sleptim1
-<int>
-x_age65yr
-<fctr>
-misnervs
-<fctr>
-mishopls
-<fctr>
-misrstls
-<fctr>
-1	6	Age 18 to 64	A little	None	None	
-2	9	Age 18 to 64	None	None	None	
-3	8	Age 18 to 64	A little	None	Some	
-4	6	Age 18 to 64	Most	None	Most	
-5	7	Age 18 to 64	None	None	None	
-6	5	Age 18 to 64	None	None	None	
-6 rows | 1-6 of 16 columns
-data.frame
-6 x 16
-Description:df [6 × 16]
- 
- 
-sleptim1
-<int>
-x_age65yr
-<fctr>
-misnervs
-<fctr>
-mishopls
-<fctr>
-misrstls
-<fctr>
-1	6	Age 18 to 64	A little	None	None	
-2	9	Age 18 to 64	None	None	None	
-3	8	Age 18 to 64	A little	None	Some	
-4	6	Age 18 to 64	Most	None	Most	
-5	7	Age 18 to 64	None	None	None	
-6	5	Age 18 to 64	None	None	None	
-6 rows | 1-6 of 16 columns
-data.frame
-6 x 16
-Description:df [6 × 16]
- 
- 
-sleptim1
-<int>
-x_age65yr
-<fctr>
-misnervs
-<fctr>
-mishopls
-<fctr>
-misrstls
-<fctr>
-misdeprd
-<fctr>
-miseffrt
-<fctr>
-miswtles
-<fctr>
-misnowrk
-<int>
-1	6	Age 18 to 64	A little	None	None	None	None	None	0	
-2	9	Age 18 to 64	None	None	None	None	None	None	0	
-3	8	Age 18 to 64	A little	None	Some	None	None	None	0	
-4	6	Age 18 to 64	Most	None	Most	None	Some	None	20	
-5	7	Age 18 to 64	None	None	None	None	None	None	0	
-6	5	Age 18 to 64	None	None	None	None	None	None	0	
-6 rows | 1-10 of 16 columns
-Show in New Window
-                               Stratified by sleep_well
-                                0             1             p      test
-  n                             1176          4822                     
-  misnervs (%)                                              <0.001     
-     All                         167 ( 14.2)   163 (  3.4)             
-     Most                        145 ( 12.3)   201 (  4.2)             
-     Some                        253 ( 21.5)   831 ( 17.2)             
-     A little                    243 ( 20.7)  1497 ( 31.0)             
-     None                        368 ( 31.3)  2130 ( 44.2)             
-  mishopls (%)                                              <0.001     
-     All                          87 (  7.4)    77 (  1.6)             
-     Most                        100 (  8.5)    82 (  1.7)             
-     Some                        173 ( 14.7)   341 (  7.1)             
-     A little                    142 ( 12.1)   488 ( 10.1)             
-     None                        674 ( 57.3)  3834 ( 79.5)             
-  misrstls (%)                                              <0.001     
-     All                         178 ( 15.1)   198 (  4.1)             
-     Most                        151 ( 12.8)   183 (  3.8)             
-     Some                        278 ( 23.6)   904 ( 18.7)             
-     A little                    199 ( 16.9)  1085 ( 22.5)             
-     None                        370 ( 31.5)  2452 ( 50.9)             
-  misdeprd (%)                                              <0.001     
-     All                          62 (  5.3)    38 (  0.8)             
-     Most                         84 (  7.1)    74 (  1.5)             
-     Some                        169 ( 14.4)   277 (  5.7)             
-     A little                    153 ( 13.0)   403 (  8.4)             
-     None                        708 ( 60.2)  4030 ( 83.6)             
-  miseffrt (%)                                              <0.001     
-     All                         184 ( 15.6)   248 (  5.1)             
-     Most                        116 (  9.9)   162 (  3.4)             
-     Some                        222 ( 18.9)   544 ( 11.3)             
-     A little                    129 ( 11.0)   737 ( 15.3)             
-     None                        525 ( 44.6)  3131 ( 64.9)             
-  miswtles (%)                                              <0.001     
-     All                          80 (  6.8)    80 (  1.7)             
-     Most                         72 (  6.1)    60 (  1.2)             
-     Some                        146 ( 12.4)   200 (  4.1)             
-     A little                     99 (  8.4)   313 (  6.5)             
-     None                        779 ( 66.2)  4169 ( 86.5)             
-  misnowrk (mean (SD))          4.68 (9.22)   1.07 (4.37)   <0.001     
-  mistmnt = No (%)               840 ( 71.4)  4122 ( 85.5)  <0.001     
-  mistrhlp (%)                                              <0.001     
-     Agree strongly              818 ( 69.6)  3574 ( 74.1)             
-     Agree slightly              195 ( 16.6)   869 ( 18.0)             
-     Neither agree nor disagree   84 (  7.1)   222 (  4.6)             
-     Disagree slightly            54 (  4.6)   104 (  2.2)             
-     Disagree strongly            25 (  2.1)    53 (  1.1)             
-  misphlpf (%)                                              <0.001     
-     Agree strongly              289 ( 24.6)  1255 ( 26.0)             
-     Agree slightly              296 ( 25.2)  1496 ( 31.0)             
-     Neither agree nor disagree  122 ( 10.4)   446 (  9.2)             
-     Disagree slightly           195 ( 16.6)  1021 ( 21.2)             
-     Disagree strongly           274 ( 23.3)   604 ( 12.5)             
-  emtsuprt (%)                                              <0.001     
-     Always                      548 ( 46.6)  2632 ( 54.6)             
-     Usually                     206 ( 17.5)  1216 ( 25.2)             
-     Sometimes                   248 ( 21.1)   628 ( 13.0)             
-     Rarely                       87 (  7.4)   181 (  3.8)             
-     Never                        87 (  7.4)   165 (  3.4)             
-  lsatisfy (%)                                              <0.001     
-     Very satisfied              399 ( 33.9)  2343 ( 48.6)             
-     Satisfied                   565 ( 48.0)  2233 ( 46.3)             
-     Dissatisfied                148 ( 12.6)   212 (  4.4)             
-     Very dissatisfied            64 (  5.4)    34 (  0.7)             
-  adult = 1 (%)                 1176 (100.0)  4822 (100.0)      NA     
-Show in New Window
+```{r}
+ggplot(brfss_sleep_mental, aes(x = sleptim1, fill=sex)) + 
+  geom_density(alpha=0.5) +
+  labs(title="Sleep Duration Distribution by Sex",
+       x="Sleep Duration (hours)",
+       y="Density")
+```
+```{r}
+ggplot(brfss_sleep_mental, aes(x = sex, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(y = "Proportion", x = "Sex", fill = "Sleep Well") +
+  ggtitle("Sleep Quality Distribution by Sex")
+```
 
-     ### Summary of continuous variables ###
+## Eduction
+```{r}
+# sleep_well 在educa下的分布，以堆叠的方式显示
+ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(educa))) + 
+  geom_bar(position="stack") +
+  labs(title="Sleep Well Distribution by Education Level", 
+       x="Sleep Well", 
+       y="Frequency") +
+  scale_fill_discrete(name="Education Level")
+```
+```{r}
+xtabs(~ sleep_well + educa, data = brfss_sleep_mental)
 
-sleep_well: 0
-            n miss p.miss mean sd median p25 p75 min max skew kurt
-misnowrk 1176    0      0    5  9      0   0   3   0  30    2    2
-------------------------------------------------------------------------------- 
-sleep_well: 1
-            n miss p.miss mean sd median p25 p75 min max skew kurt
-misnowrk 4822    0      0    1  4      0   0   0   0  30    5   27
+data.mat <- matrix(c(0, 38, 127, 425, 322, 263, 2, 66, 233, 1457, 1396, 1665), byrow=TRUE, nrow=2)
+data.mat
 
-p-values
+expected <- chisq.test(data.mat)$expected
+expected
+```
+**Two of the expected counts in this table is too small (<5), so we should use Fisher’s Exact Test.**
+```{r}
+data.mat <- matrix(c(0, 38, 127, 425, 322, 263, 2, 66, 233, 1457, 1396, 1665), byrow=TRUE, nrow=2)
+fisher.test(data.mat, conf.level = 0.9, simulate.p.value = TRUE) 
+```
+# mental health facotrs
+## mishopls
+```{r}
+# During the past 30 days, about how often did you feel hopeless- all of the time, most of the time, some of the time, a little of the time or none of the time?
+ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(mishopls))) + 
+  geom_bar(position="stack") +
+  labs(title="Sleep Well Distribution by Hopeless", 
+       x="Sleep Well", 
+       y="Frequency") +
+  scale_fill_discrete(name="Hopeless Time")
+```
+```{r}
+xtabs(~ sleep_well + mishopls, data = brfss_sleep_mental)
 
-Standardize mean differences
-            1 vs 2
-misnowrk 0.5009865
+data.mat <- matrix(c(87, 100, 173, 142, 673, 77, 82, 341, 488, 3831), byrow=TRUE, nrow=2)
+data.mat
 
-=======================================================================================
+expected <- chisq.test(data.mat)$expected
+expected
+```
+**None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
+```{r}
+data.mat <- matrix(c(87, 100, 173, 142, 673, 77, 82, 341, 488, 3831), byrow=TRUE, nrow=2)
+chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
+chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
+```
 
-     ### Summary of categorical variables ### 
+## mistmnt
+```{r}
+# sleep_well 在是否接受心理健康治疗的情况下的分布，以堆叠的方式显示
+ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(mistmnt))) + 
+  geom_bar(position="stack") +
+  labs(title="Sleep Well Distribution by Mental Health Treatment", 
+       x="Sleep Well", 
+       y="Frequency") +
+  scale_fill_discrete(name="Mental Health Treatment")
+```
+```{r}
+xtabs(~ sleep_well + mistmnt, data = brfss_sleep_mental)
 
-sleep_well: 0
-      var    n miss p.miss                      level freq percent cum.percent
- misnervs 1176    0    0.0                        All  167    14.2        14.2
-                                                 Most  145    12.3        26.5
-                                                 Some  253    21.5        48.0
-                                             A little  243    20.7        68.7
-                                                 None  368    31.3       100.0
-                                                                              
- mishopls 1176    0    0.0                        All   87     7.4         7.4
-                                                 Most  100     8.5        15.9
-                                                 Some  173    14.7        30.6
-                                             A little  142    12.1        42.7
-                                                 None  674    57.3       100.0
-                                                                              
- misrstls 1176    0    0.0                        All  178    15.1        15.1
-                                                 Most  151    12.8        28.0
-                                                 Some  278    23.6        51.6
-                                             A little  199    16.9        68.5
-                                                 None  370    31.5       100.0
-                                                                              
- misdeprd 1176    0    0.0                        All   62     5.3         5.3
-                                                 Most   84     7.1        12.4
-                                                 Some  169    14.4        26.8
-                                             A little  153    13.0        39.8
-                                                 None  708    60.2       100.0
-                                                                              
- miseffrt 1176    0    0.0                        All  184    15.6        15.6
-                                                 Most  116     9.9        25.5
-                                                 Some  222    18.9        44.4
-                                             A little  129    11.0        55.4
-                                                 None  525    44.6       100.0
-                                                                              
- miswtles 1176    0    0.0                        All   80     6.8         6.8
-                                                 Most   72     6.1        12.9
-                                                 Some  146    12.4        25.3
-                                             A little   99     8.4        33.8
-                                                 None  779    66.2       100.0
-                                                                              
-  mistmnt 1176    0    0.0                        Yes  336    28.6        28.6
-                                                   No  840    71.4       100.0
-                                                                              
- mistrhlp 1176    0    0.0             Agree strongly  818    69.6        69.6
-                                       Agree slightly  195    16.6        86.1
-                           Neither agree nor disagree   84     7.1        93.3
-                                    Disagree slightly   54     4.6        97.9
-                                    Disagree strongly   25     2.1       100.0
-                                                                              
- misphlpf 1176    0    0.0             Agree strongly  289    24.6        24.6
-                                       Agree slightly  296    25.2        49.7
-                           Neither agree nor disagree  122    10.4        60.1
-                                    Disagree slightly  195    16.6        76.7
-                                    Disagree strongly  274    23.3       100.0
-                                                                              
- emtsuprt 1176    0    0.0                     Always  548    46.6        46.6
-                                              Usually  206    17.5        64.1
-                                            Sometimes  248    21.1        85.2
-                                               Rarely   87     7.4        92.6
-                                                Never   87     7.4       100.0
-                                                                              
- lsatisfy 1176    0    0.0             Very satisfied  399    33.9        33.9
-                                            Satisfied  565    48.0        82.0
-                                         Dissatisfied  148    12.6        94.6
-                                    Very dissatisfied   64     5.4       100.0
-                                                                              
-    adult 1176    0    0.0                          1 1176   100.0       100.0
-                                                                              
-------------------------------------------------------------------------------- 
-sleep_well: 1
-      var    n miss p.miss                      level freq percent cum.percent
- misnervs 4822    0    0.0                        All  163     3.4         3.4
-                                                 Most  201     4.2         7.5
-                                                 Some  831    17.2        24.8
-                                             A little 1497    31.0        55.8
-                                                 None 2130    44.2       100.0
-                                                                              
- mishopls 4822    0    0.0                        All   77     1.6         1.6
-                                                 Most   82     1.7         3.3
-                                                 Some  341     7.1        10.4
-                                             A little  488    10.1        20.5
-                                                 None 3834    79.5       100.0
-                                                                              
- misrstls 4822    0    0.0                        All  198     4.1         4.1
-                                                 Most  183     3.8         7.9
-                                                 Some  904    18.7        26.6
-                                             A little 1085    22.5        49.1
-                                                 None 2452    50.9       100.0
-                                                                              
- misdeprd 4822    0    0.0                        All   38     0.8         0.8
-                                                 Most   74     1.5         2.3
-                                                 Some  277     5.7         8.1
-                                             A little  403     8.4        16.4
-                                                 None 4030    83.6       100.0
-                                                                              
- miseffrt 4822    0    0.0                        All  248     5.1         5.1
-                                                 Most  162     3.4         8.5
-                                                 Some  544    11.3        19.8
-                                             A little  737    15.3        35.1
-                                                 None 3131    64.9       100.0
-                                                                              
- miswtles 4822    0    0.0                        All   80     1.7         1.7
-                                                 Most   60     1.2         2.9
-                                                 Some  200     4.1         7.1
-                                             A little  313     6.5        13.5
-                                                 None 4169    86.5       100.0
-                                                                              
-  mistmnt 4822    0    0.0                        Yes  700    14.5        14.5
-                                                   No 4122    85.5       100.0
-                                                                              
- mistrhlp 4822    0    0.0             Agree strongly 3574    74.1        74.1
-                                       Agree slightly  869    18.0        92.1
-                           Neither agree nor disagree  222     4.6        96.7
-                                    Disagree slightly  104     2.2        98.9
-                                    Disagree strongly   53     1.1       100.0
-                                                                              
- misphlpf 4822    0    0.0             Agree strongly 1255    26.0        26.0
-                                       Agree slightly 1496    31.0        57.1
-                           Neither agree nor disagree  446     9.2        66.3
-                                    Disagree slightly 1021    21.2        87.5
-                                    Disagree strongly  604    12.5       100.0
-                                                                              
- emtsuprt 4822    0    0.0                     Always 2632    54.6        54.6
-                                              Usually 1216    25.2        79.8
-                                            Sometimes  628    13.0        92.8
-                                               Rarely  181     3.8        96.6
-                                                Never  165     3.4       100.0
-                                                                              
- lsatisfy 4822    0    0.0             Very satisfied 2343    48.6        48.6
-                                            Satisfied 2233    46.3        94.9
-                                         Dissatisfied  212     4.4        99.3
-                                    Very dissatisfied   34     0.7       100.0
-                                                                              
-    adult 4822    0    0.0                          1 4822   100.0       100.0
-                                                                              
+data.mat <- matrix(c(336,840, 700, 4122), byrow=TRUE, nrow=2)
+data.mat
 
-p-values
+expected <- chisq.test(data.mat)$expected
+expected
+```
+**None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
+```{r}
+data.mat <- matrix(c(336,840, 700, 4122), byrow=TRUE, nrow=2)
+chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
+chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
+```
 
-Standardize mean differences
-            1 vs 2
-misnervs 0.5787275
-mishopls 0.5639175
-misrstls 0.6127307
-misdeprd 0.5787548
-miseffrt 0.5671230
-miswtles 0.5361507
-mistmnt  0.3469614
-mistrhlp 0.1989142
-misphlpf 0.3039284
-emtsuprt 0.3687868
-lsatisfy 0.4644957
-adult    0.0000000
-R Console
-Description:df [1 × 2]
- 
- 
-pNormal
-<dbl>
-pNonNormal
-<dbl>
-misnowrk	2.812087e-83	3.216881e-71		
-1 row
-data.frame
-1 x 2
-Description:df [12 × 2]
- 
- 
-pApprox
-<dbl>
-pExact
-<dbl>
-misnervs	1.036330e-83	NA		
-mishopls	3.368902e-83	NA		
-misrstls	2.775483e-90	NA		
-misdeprd	3.215263e-87	NA		
-miseffrt	1.884467e-74	NA		
-miswtles	1.235398e-76	NA		
-mistmnt	4.731496e-30	1.994199e-27		
-mistrhlp	4.630215e-09	NA		
-misphlpf	3.066614e-20	NA		
-emtsuprt	1.904388e-29	NA		
-1-10 of 12 rows
-data.frame
-12 x 2
-Description:df [1 × 2]
- 
- 
-pNormal
-<dbl>
-pNonNormal
-<dbl>
-misnowrk	2.812087e-83	3.216881e-71		
-1 row
+## misphlpf
+```{r}
+# sleep_well 和 misphlpf 
+# Treatment can help people with mental illness lead normal lives. Do you agree slightly or strongly, or disagree slightly or strongly?
+ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(misphlpf))) + 
+  geom_bar(position="stack") +
+  labs(title="Sleep Well Distribution by Attitude towards Mental Health Help", 
+       x="Sleep Well", 
+       y="Frequency") +
+  scale_fill_discrete(name="Mental Health Help Attitude")
+```
+```{r}
+xtabs(~ sleep_well + misphlpf, data = brfss_sleep_mental)
+
+data.mat <- matrix(c(289,296, 122, 195, 1255, 1496, 446, 1021), byrow=TRUE, nrow=2)
+data.mat
+
+expected <- chisq.test(data.mat)$expected
+expected
+```
+**None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
+```{r}
+data.mat <- matrix(c(289,296, 122, 195, 1255, 1496, 446, 1021), byrow=TRUE, nrow=2)
+chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
+chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
+```
+
+## misnowrk
+```{r}
+# 使用 ggplot 绘制 sleep_well 与 misnowrk 之间的箱线图(数值变量)
+# During the past 30 days, for about how many days did a mental health condition or emotional problem keep you from doing your work or other usual activities? (If asked, "usual activities" includes housework, self-care, caregiving, volunteer work, attending school, studies or recreation.)
+ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), y=misnowrk)) +
+  geom_boxplot() +
+  labs(title="Boxplot of MISNOWRK by Sleep Well Category", 
+       x="Sleep Well Category", 
+       y="MISNOWRK")
+```
+
+```{r}
+# 正态性检验
+qqnorm(brfss_sleep_mental$misnowrk, main = "QQ Plot for MISNOWRK with Sleep Well")
+qqline(brfss_sleep_mental$misnowrk, col = "red")
+```
+
+
+```{r}
+# 使用 ggplot 绘制 misnowrk 的直方图 看看正态不
+ggplot(brfss_sleep_mental, aes(x=misnowrk)) +
+  geom_histogram(binwidth = 1, fill="blue", color="black") +
+  labs(title="Histogram of MISNOWRK", x="MISNOWRK", y="Frequency")
+```
+```{r}
+# 非正态，两非配对总体mean检验，非参数Wilcoxon秩和检验
+wilcox.test(misnowrk ~ sleep_well, data = brfss_sleep_mental)
+```
+
+
