@@ -57,14 +57,23 @@ brfss_sleep_mental_omit <- brfss_sleep_mental_omit %>%
   mutate(adult= ifelse(x_age65yr == "Age 18 to 64","1","0"))
 
 # 根据不同年龄组睡眠评级
-brfss_sleep_mental_adult <- brfss_sleep_mental_omit %>% 
+brfss_sleep_mental_adult <- brfss_sleep_mental_omit %>%
   filter(adult == 1) %>%
-  mutate(sleep_well = ifelse(sleptim1 >= 6 & sleptim1 <=9 , "1", "0"))
-head(brfss_sleep_mental_adult)
+  mutate(sleep_well = case_when(
+    sleptim1 >= 7 & sleptim1 <= 9 ~ "good",
+    sleptim1 < 7 ~ "insufficient",
+    sleptim1 > 9 ~ "excessive",
+    TRUE ~ NA_character_ # for missing or other values
+  ))
 
 brfss_sleep_mental_older_adults <- brfss_sleep_mental_omit %>% 
-  filter(adult == 1) %>%
-  mutate(sleep_well = ifelse(sleptim1 >= 6 & sleptim1 <=8 , "1", "0"))
+  filter(adult != 1) %>%
+  mutate(sleep_well = case_when(
+  sleptim1 >= 7 & sleptim1 <= 9 ~ "good",
+  sleptim1 < 7 ~ "insufficient",
+  sleptim1 > 9 ~ "excessive",
+  TRUE ~ NA_character_ # for missing or other values
+  ))
 head(brfss_sleep_mental_older_adults)
 
 brfss_sleep_mental <- rbind(brfss_sleep_mental_adult, brfss_sleep_mental_older_adults)
@@ -109,9 +118,7 @@ t.test(sleptim1 ~ sex, data = brfss_sleep_mental)
 ```
 **睡眠平均时长在男女间没明显差异，接下来看
 ```{r}
-xtabs(~ sleep_well + sex, data = brfss_sleep_mental)
-
-data.mat <- matrix(c(388,7888, 1798, 3024), byrow=TRUE, nrow=2)
+data.mat <- xtabs(~ sleep_well + sex, data = brfss_sleep_mental)
 data.mat
 
 expected <- chisq.test(data.mat)$expected
@@ -119,7 +126,6 @@ expected
 ```
 **Two overall tests.None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
 ```{r}
-data.mat <- matrix(c(388,7888, 1798, 3024), byrow=TRUE, nrow=2)
 chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
 chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
 ```
