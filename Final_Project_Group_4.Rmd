@@ -99,12 +99,19 @@ summary(table)
 
 # 社会人口学
 ## sex
-**sex的t检验和chisq矛盾了，问TA**
 ```{r}
 sex_counts <- table(brfss_sleep_mental$sex)
 sex_counts
 ```
-
+```{r}
+# 箱线图比较男女睡眠时长
+ggplot(brfss_sleep_mental, aes(x = factor(sex), y = sleptim1, fill = factor(sex))) +
+  geom_boxplot() +
+  labs(title = "Sleep Duration by Gender",
+       x = "Gender",
+       y = "Sleep Duration (hours)",
+       fill = "Gender")
+```
 ```{r}
 # sleep_well 在不同性别下的分布
 ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(sex))) + 
