@@ -182,33 +182,32 @@ fisher.test(data.mat, conf.level = 0.9, simulate.p.value = TRUE)
 ```{r}
 # During the past 30 days, about how often did you feel hopeless- all of the time, most of the time, some of the time, a little of the time or none of the time?
 ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(mishopls))) + 
-  geom_bar(position="stack") +
+  geom_bar(position="fill") +
   labs(title="Sleep Well Distribution by Hopeless", 
        x="Sleep Well", 
        y="Frequency") +
   scale_fill_discrete(name="Hopeless Time")
 ```
 ```{r}
-xtabs(~ sleep_well + mishopls, data = brfss_sleep_mental)
+data_mishopls <- xtabs(~ sleep_well + mishopls, data = brfss_sleep_mental)
 
-data.mat <- matrix(c(87, 100, 173, 142, 673, 77, 82, 341, 488, 3831), byrow=TRUE, nrow=2)
-data.mat
 
-expected <- chisq.test(data.mat)$expected
+data_mishopls
+
+expected <- chisq.test(data_mishopls)$expected
 expected
 ```
 **None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
 ```{r}
-data.mat <- matrix(c(87, 100, 173, 142, 673, 77, 82, 341, 488, 3831), byrow=TRUE, nrow=2)
-chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
-chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
+chisq.test(data_mishopls,correct=FALSE)$statistic %>% round(3)
+chisq.test(data_mishopls,correct=FALSE)$p.value %>% round(3)
 ```
 
 ## mistmnt
 ```{r}
 # sleep_well 在是否接受心理健康治疗的情况下的分布，以堆叠的方式显示
 ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(mistmnt))) + 
-  geom_bar(position="stack") +
+  geom_bar(position="fill") +
   labs(title="Sleep Well Distribution by Mental Health Treatment", 
        x="Sleep Well", 
        y="Frequency") +
@@ -217,17 +216,16 @@ ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(mistmnt))) +
 ```{r}
 xtabs(~ sleep_well + mistmnt, data = brfss_sleep_mental)
 
-data.mat <- matrix(c(336,840, 700, 4122), byrow=TRUE, nrow=2)
-data.mat
+data_mistmnt <- matrix(c(336,840, 700, 4122), byrow=TRUE, nrow=2)
+data_mistmnt
 
-expected <- chisq.test(data.mat)$expected
+expected <- chisq.test(data_mistmnt)$expected
 expected
 ```
 **None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
 ```{r}
-data.mat <- matrix(c(336,840, 700, 4122), byrow=TRUE, nrow=2)
-chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
-chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
+chisq.test(data_mistmnt,correct=FALSE)$statistic %>% round(3)
+chisq.test(data_mistmnt,correct=FALSE)$p.value %>% round(3)
 ```
 
 ## misphlpf
@@ -235,33 +233,30 @@ chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
 # sleep_well 和 misphlpf 
 # Treatment can help people with mental illness lead normal lives. Do you agree slightly or strongly, or disagree slightly or strongly?
 ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(misphlpf))) + 
-  geom_bar(position="stack") +
+  geom_bar(position="fill") +
   labs(title="Sleep Well Distribution by Attitude towards Mental Health Help", 
        x="Sleep Well", 
        y="Frequency") +
   scale_fill_discrete(name="Mental Health Help Attitude")
 ```
 ```{r}
-xtabs(~ sleep_well + misphlpf, data = brfss_sleep_mental)
+data_misphlpf <- xtabs(~ sleep_well + misphlpf, data = brfss_sleep_mental)
+data_misphlpf
 
-data.mat <- matrix(c(289,296, 122, 195, 1255, 1496, 446, 1021), byrow=TRUE, nrow=2)
-data.mat
-
-expected <- chisq.test(data.mat)$expected
+expected <- chisq.test(data_misphlpf)$expected
 expected
 ```
 **None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
 ```{r}
-data.mat <- matrix(c(289,296, 122, 195, 1255, 1496, 446, 1021), byrow=TRUE, nrow=2)
-chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
-chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
+chisq.test(data_misphlpf, correct=FALSE)$statistic %>% round(3)
+chisq.test(data_misphlpf, correct=FALSE)$p.value %>% round(3)
 ```
 
 ## misnowrk
 ```{r}
 # 使用 ggplot 绘制 sleep_well 与 misnowrk 之间的箱线图(数值变量)
 # During the past 30 days, for about how many days did a mental health condition or emotional problem keep you from doing your work or other usual activities? (If asked, "usual activities" includes housework, self-care, caregiving, volunteer work, attending school, studies or recreation.)
-ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), y=misnowrk)) +
+ggplot(brfss_sleep_mental, aes(x = factor(sleep_well), y = misnowrk)) +
   geom_boxplot() +
   labs(title="Boxplot of MISNOWRK by Sleep Well Category", 
        x="Sleep Well Category", 
