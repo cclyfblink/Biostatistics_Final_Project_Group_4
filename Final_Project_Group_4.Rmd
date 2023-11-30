@@ -69,9 +69,9 @@ brfss_sleep_mental_adult <- brfss_sleep_mental_omit %>%
 brfss_sleep_mental_older_adults <- brfss_sleep_mental_omit %>% 
   filter(adult != 1) %>%
   mutate(sleep_well = case_when(
-  sleptim1 >= 7 & sleptim1 <= 9 ~ "good",
+  sleptim1 >= 7 & sleptim1 <= 8 ~ "good",
   sleptim1 < 7 ~ "insufficient",
-  sleptim1 > 9 ~ "excessive",
+  sleptim1 > 8 ~ "excessive",
   TRUE ~ NA_character_ # for missing or other values
   ))
 head(brfss_sleep_mental_older_adults)
