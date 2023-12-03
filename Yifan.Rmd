@@ -1,0 +1,288 @@
+---
+title: "Yifan"
+author: "Hanbo Dong, Huiye Han, Yifan Lu, Zhuoran Li"
+output:
+  html_document:
+    fig_height: 4.5
+    fig_width: 8
+  pdf_document:
+    fig_height: 3.5
+    fig_width: 3.5
+  word_document:
+    toc: no
+---
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(tidymodels)
+library(janitor)
+library(tableone)
+library(here)
+library(nortest)
+```
+
+```{r}
+load("brfss2013.RData")
+```
+
+```{r, warning = FALSE, message = FALSE}
+brfss2013 <- clean_names(brfss2013)
+# 筛选factor
+factors <- tolower(c("SLEPTIM1", "X_AGE65YR", 
+                     "MISHOPLS", "MISTMNT", "MISPHLPF", "MISNOWRK",
+                     "SEX", "X_EDUCAG", "X_INCOMG", "INTERNET", "VETERAN3", "X_BMI5CAT"))
+
+brfss_sleep_mental <- brfss2013 %>%
+  select(factors)
+# head(brfss_sleep_mental)
+# skimr::skim(brfss_sleep_mental)
+
+# 删除_INCOMG的“DONT KNOW”,
+# 留下internet的Yes和No
+# 留下misphlpf的前五个
+# 留下x_incomg的前几个
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  filter(!x_incomg == "Don’t know/Not sure/Missing") %>%
+  filter(internet %in% c("Yes", "No")) %>%
+  filter(misphlpf %in% c("Disagree strongly", 
+                         "Disagree slightly", 
+                         "Neither agree nor disagree", 
+                         "Agree slightly",
+                         "Agree strongly")) %>%
+  filter(x_incomg %in% c("Less than $15,000", 
+                         "$15,000 to less than $25,000", 
+                         "$25,000 to less than $35,000",
+                         "$35,000 to less than $50,000",
+                         "$50,000 or more")) %>%
+  filter(!x_educag == "9") %>%
+  filter(veteran3 %in% c("Yes", "No"))
+```
+
+```{r}
+# 整体缺失值删除
+brfss_sleep_mental_omit <- na.omit(brfss_sleep_mental)
+# head(brfss_sleep_mental_omit)
+# skimr::skim(brfss_sleep_mental_omit)
+```
+
+```{r}
+# 根据人口年龄创建adult，是否是成年人（1:成年人， 0:大于65的老年人）
+brfss_sleep_mental_omit <- brfss_sleep_mental_omit %>%
+  filter(x_age65yr == "Age 18 to 64")
+
+# 睡眠评级
+brfss_sleep_mental <- brfss_sleep_mental_omit %>%
+  mutate(sleep_well = case_when(
+    sleptim1 >= 7 & sleptim1 <= 9 ~ "good",
+    sleptim1 < 7 ~ "bad",
+    sleptim1 > 9 ~ "bad"))
+
+# mishopls(失去希望的程度）变成数值型有序分类数据
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(mishopls = case_when(
+    mishopls == "None" ~ "0", # 0：失去希望程度最低
+    mishopls == "A little" ~ "1",
+    mishopls == "Some" ~ "2",
+    mishopls == "Most" ~ "3",
+    mishopls == "All" ~ "4")) # 4: 失去希望程度最高
+
+# mistmnt(是否在接受治疗)
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(mistmnt = case_when(
+    mistmnt == "Yes" ~ "1", # 1：接受治疗
+    mistmnt == "No" ~ "0")) # 0: 没接受治疗
+
+# misphlpf(是否认同身边人关切同情心理疾病患者) 变成数值型有序分类数据
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(misphlpf = case_when(
+    misphlpf == "Disagree strongly" ~ "0", # 0：完全不认同身边人关切同情心理疾病患者
+    misphlpf == "Disagree slightly" ~ "1",
+    misphlpf == "Neither agree nor disagree" ~ "2",
+    misphlpf == "Agree slightly" ~ "3",
+    misphlpf == "Agree strongly" ~ "4")) 
+
+# sex转换成数值型分类变量
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(sex = case_when(
+    sex == "Male" ~ "1", # 1:Male
+    sex == "Female" ~ "0")) # 0:Female
+
+# internet(是否上网)转换成数值型分类变量
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(internet = case_when(
+    internet == "Yes" ~ "1", # 1:上网
+    internet == "No" ~ "0")) # 0:不上网
+
+# x_incomg (收入等级划分，调查者分好的) 变成数值型有序分类数据
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(x_incomg = case_when(
+    x_incomg == "Less than $15,000" ~ "1", # 1：收入最少
+    x_incomg == "$15,000 to less than $25,000" ~ "2",
+    x_incomg == "$25,000 to less than $35,000" ~ "3",
+    x_incomg == "$35,000 to less than $50,000" ~ "4",
+    x_incomg == "$50,000 or more" ~ "5"))   # 5: 收入最多
+
+# x_educag(教育等级划分)变成数值型有序分类数据
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(x_educag = case_when(
+    x_educag == "Did not graduate high school" ~ "1", # 1：教育水平最低
+    x_educag == "Graduated high school" ~ "2",
+    x_educag == "Attended college or technical school" ~ "3",
+    x_educag == "Graduated from college or technical school" ~ "4"))
+
+
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(veteran3 = case_when(
+    veteran3 == "Yes" ~ "1", # 1：是退伍军人
+    veteran3 == "No" ~ "0")) # 0: 不是退伍军人
+
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(x_bmi5cat = case_when(
+    x_bmi5cat == "Underweight" ~ "1", # 1：体重最轻
+    x_bmi5cat == "Normal weight" ~ "2",
+    x_bmi5cat == "Overweight" ~ "3",
+    x_bmi5cat == "Obese" ~ "4")) # 4: 体重最重
+
+# 删除x_age65yr列
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  select(!x_age65yr)
+
+# 删除x_educag列
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  filter(!x_educag == "NA")
+
+# convert to numeric
+brfss_sleep_mental$sleptim1 <- as.numeric(brfss_sleep_mental$sleptim1)
+brfss_sleep_mental$mistmnt <- as.numeric(brfss_sleep_mental$mistmnt)
+brfss_sleep_mental$misphlpf <- as.numeric(brfss_sleep_mental$misphlpf)
+brfss_sleep_mental$mishopls <- as.numeric(brfss_sleep_mental$mishopls)
+brfss_sleep_mental$sex <- as.numeric(brfss_sleep_mental$sex)
+brfss_sleep_mental$internet <- as.numeric(brfss_sleep_mental$internet)
+brfss_sleep_mental$x_incomg <- as.numeric(brfss_sleep_mental$x_incomg)
+brfss_sleep_mental$x_educag <- as.numeric(brfss_sleep_mental$x_educag)
+brfss_sleep_mental$veteran3 <- as.numeric(brfss_sleep_mental$veteran3)
+brfss_sleep_mental$x_bmi5cat <- as.numeric(brfss_sleep_mental$x_bmi5cat)
+
+write.csv(brfss_sleep_mental, here("brfss_sleep_mental.csv"))
+```
+
+```{r}
+data <- brfss_sleep_mental
+
+ad.test(data$mishopls)$p.value < 0.05
+ad.test(data$misnowrk)$p.value < 0.05
+
+
+
+test_mishopls <- kruskal.test(sleep_well ~ mishopls, data = data)
+test_mistmnt <- chisq.test(table(data$sleep_well, data$mistmnt), correct=FALSE)
+test_misphlpf <- chisq.test(table(data$sleep_well, data$misphlpf), correct=FALSE)
+test_sex <- chisq.test(table(data$sleep_well, data$sex), correct=FALSE)
+test_misnowrk <- kruskal.test(sleep_well ~ misnowrk, data = data)
+test_x_educag <- chisq.test(table(data$sleep_well, data$x_educag), correct=FALSE)
+test_x_incomg <- chisq.test(table(data$sleep_well, data$x_incomg), correct=FALSE)
+test_internet <- chisq.test(table(data$sleep_well, data$internet), correct=FALSE)
+test_veteran <- chisq.test(table(data$sleep_well, data$veteran), correct=FALSE)
+test_x_bmi5cat <- kruskal.test(sleep_well ~ x_bmi5cat, data = data)
+
+# Creating a table to store all results
+results_table <- data.frame(
+  Variable = c("mishopls", "mistmnt", "misphlpf", "sex", "misnowrk", "x_educag", "x_incomg", "internet", "veteran", "x_bmi5cat"),
+  Test_Type = c("Kruskal-Wallis", "Chi-Square", "Chi-Square", "Chi-Square", "Kruskal-Wallis", "Chi-Square", "Chi-Square", "Chi-Square", "Chi-Square", "Kruskal-Wallis"),
+  P_Value = c(test_mishopls$p.value, test_mistmnt$p.value, test_misphlpf$p.value, 
+              test_sex$p.value, test_misnowrk$p.value, test_x_educag$p.value, 
+              test_x_incomg$p.value, test_internet$p.value, test_veteran$p.value, test_x_bmi5cat$p.value)
+)
+
+# Viewing the results table
+print(results_table)
+```
+```{r}
+data$sleep_well_binary <- ifelse(data$sleep_well == 'good', 1, 0)
+```
+
+```{r}
+# show the distribution of x_educag vs. sleep_well
+ggplot(data, aes(x = x_educag, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "x_educag", y = "Percentage", fill = "sleep_well") +
+  theme_minimal()
+```
+```{r}
+# show the distribution of mistmnt vs. sleep_well
+ggplot(data, aes(x = mistmnt, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "mistmnt", y = "Percentage", fill = "sleep_well") +
+  theme_minimal()
+```
+```{r}
+# show the distribution of mishopls vs. sleep_well
+ggplot(data, aes(x = mishopls, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "mishopls", y = "Percentage", fill = "sleep_well") +
+  theme_minimal()
+```
+```{r}
+# show the distribution of x_incomg vs. sleep_well
+ggplot(data, aes(x = x_incomg, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "x_incomg", y = "Percentage", fill = "sleep_well") +
+  theme_minimal()
+```
+```{r}
+# show the distribution of internet vs. sleep_well
+ggplot(data, aes(x = internet, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "internet", y = "Percentage", fill = "sleep_well") +
+  theme_minimal()
+```
+
+```{r}
+# show the distribution of veteran3 vs. sleep_well
+ggplot(data, aes(x = veteran3, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "veteran3", y = "Percentage", fill = "sleep_well") +
+  theme_minimal()
+```
+
+
+```{r}
+# show the distribution of sex vs. sleep_well
+ggplot(data, aes(x = sex, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "sex", y = "Percentage", fill = "sleep_well") +
+  theme_minimal()
+```
+
+```{r}
+# show the distribution of misnowrk vs. sleep_well
+ggplot(data, aes(x = misnowrk, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "misnowrk", y = "Percentage", fill = "sleep_well") +
+  theme_minimal()
+```
+
+```{r}
+# show the distribution of misphlpf vs. sleep_well
+ggplot(data, aes(x = misphlpf, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "misphlpf", y = "Percentage", fill = "sleep_well") +
+  theme_minimal()
+```
+
+```{r}
+# show the distribution of x_bmi5cat vs. sleep_well
+ggplot(data, aes(x = x_bmi5cat, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "x_bmi5cat", y = "Percentage", fill = "sleep_well") +
+  theme_minimal()
+```
+
+```{r}
+# Fit the binary logistic regression model
+model <- glm(sleep_well_binary ~ x_educag + mistmnt + mishopls + x_incomg+ internet + sex + veteran3 + I(x_bmi5cat^2), 
+             data = data, family =  binomial(link="logit"))
+
+# Summary of the model
+summary(model)
+```
+The model suggests that education level, feelings of hopelessness, income level, gender, veteran status, and BMI (in a non-linear fashion) are important factors in predicting sleep quality. Variables like mental health treatment and internet usage do not appear to have a significant independent effect on sleep quality when controlling for other factors.
