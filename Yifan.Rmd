@@ -20,12 +20,16 @@ library(here)
 library(nortest)
 ```
 
+```{r}
+load("brfss2013.RData")
+```
+
 ```{r, warning = FALSE, message = FALSE}
 brfss2013 <- clean_names(brfss2013)
 # 筛选factor
 factors <- tolower(c("SLEPTIM1", "X_AGE65YR", 
                      "MISHOPLS", "MISTMNT", "MISPHLPF", "MISNOWRK",
-                     "SEX","X_EDUCAG", "X_INCOMG", "X_BMI5CAT","VETERAN3"))
+                     "SEX", "X_EDUCAG", "X_INCOMG", "INTERNET", "VETERAN3", "X_BMI5CAT"))
 
 brfss_sleep_mental <- brfss2013 %>%
   select(factors)
@@ -38,6 +42,7 @@ brfss_sleep_mental <- brfss2013 %>%
 # 留下x_incomg的前几个
 brfss_sleep_mental <- brfss_sleep_mental %>%
   filter(!x_incomg == "Don’t know/Not sure/Missing") %>%
+  filter(internet %in% c("Yes", "No")) %>%
   filter(misphlpf %in% c("Disagree strongly", 
                          "Disagree slightly", 
                          "Neither agree nor disagree", 
@@ -48,7 +53,8 @@ brfss_sleep_mental <- brfss_sleep_mental %>%
                          "$25,000 to less than $35,000",
                          "$35,000 to less than $50,000",
                          "$50,000 or more")) %>%
-  filter(!x_educag == "9")
+  filter(!x_educag == "9") %>%
+  filter(veteran3 %in% c("Yes", "No"))
 ```
 
 ```{r}
@@ -63,18 +69,12 @@ brfss_sleep_mental_omit <- na.omit(brfss_sleep_mental)
 brfss_sleep_mental_omit <- brfss_sleep_mental_omit %>%
   filter(x_age65yr == "Age 18 to 64")
 
-# sex转换成数值型分类变量
-brfss_sleep_mental <- brfss_sleep_mental %>%
-  mutate(sex = case_when(
-    sex == "Male" ~ "1", # 1:Male
-    sex == "Female" ~ "0")) # 0:Female
-
 # 睡眠评级
 brfss_sleep_mental <- brfss_sleep_mental_omit %>%
   mutate(sleep_well = case_when(
-    sleptim1 >= 7 & sleptim1 <= 9 ~ "1",
-    sleptim1 < 7 ~ "0",
-    sleptim1 > 9 ~ "0"))
+    sleptim1 >= 7 & sleptim1 <= 9 ~ "good",
+    sleptim1 < 7 ~ "bad",
+    sleptim1 > 9 ~ "bad"))
 
 # mishopls(失去希望的程度）变成数值型有序分类数据
 brfss_sleep_mental <- brfss_sleep_mental %>%
@@ -100,6 +100,18 @@ brfss_sleep_mental <- brfss_sleep_mental %>%
     misphlpf == "Agree slightly" ~ "3",
     misphlpf == "Agree strongly" ~ "4")) 
 
+# sex转换成数值型分类变量
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(sex = case_when(
+    sex == "Male" ~ "1", # 1:Male
+    sex == "Female" ~ "0")) # 0:Female
+
+# internet(是否上网)转换成数值型分类变量
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(internet = case_when(
+    internet == "Yes" ~ "1", # 1:上网
+    internet == "No" ~ "0")) # 0:不上网
+
 # x_incomg (收入等级划分，调查者分好的) 变成数值型有序分类数据
 brfss_sleep_mental <- brfss_sleep_mental %>%
   mutate(x_incomg = case_when(
@@ -117,19 +129,18 @@ brfss_sleep_mental <- brfss_sleep_mental %>%
     x_educag == "Attended college or technical school" ~ "3",
     x_educag == "Graduated from college or technical school" ~ "4"))
 
-# x_bmi5cat(BMI)变成数值型有序分类变量
-brfss_sleep_mental <- brfss_sleep_mental %>%
-  mutate(x_bmi5cat = case_when(
-    x_bmi5cat == "Underweight" ~ "1", # 1：Underweight
-    x_bmi5cat == "Normal Weight" ~ "2",
-    x_bmi5cat == "Overweight" ~ "3",
-    x_bmi5cat == "Obese" ~ "4"))
 
-# veteran3(是否是退伍老兵)变成数值型有序分类变量
 brfss_sleep_mental <- brfss_sleep_mental %>%
   mutate(veteran3 = case_when(
     veteran3 == "Yes" ~ "1", # 1：是退伍军人
     veteran3 == "No" ~ "0")) # 0: 不是退伍军人
+
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(x_bmi5cat = case_when(
+    x_bmi5cat == "Underweight" ~ "1", # 1：体重最轻
+    x_bmi5cat == "Normal weight" ~ "2",
+    x_bmi5cat == "Overweight" ~ "3",
+    x_bmi5cat == "Obese" ~ "4")) # 4: 体重最重
 
 # 删除x_age65yr列
 brfss_sleep_mental <- brfss_sleep_mental %>%
@@ -145,37 +156,162 @@ brfss_sleep_mental$mistmnt <- as.numeric(brfss_sleep_mental$mistmnt)
 brfss_sleep_mental$misphlpf <- as.numeric(brfss_sleep_mental$misphlpf)
 brfss_sleep_mental$mishopls <- as.numeric(brfss_sleep_mental$mishopls)
 brfss_sleep_mental$sex <- as.numeric(brfss_sleep_mental$sex)
+brfss_sleep_mental$internet <- as.numeric(brfss_sleep_mental$internet)
 brfss_sleep_mental$x_incomg <- as.numeric(brfss_sleep_mental$x_incomg)
 brfss_sleep_mental$x_educag <- as.numeric(brfss_sleep_mental$x_educag)
-brfss_sleep_mental$x_bmi5cat <- as.numeric(brfss_sleep_mental$x_bmi5cat)
 brfss_sleep_mental$veteran3 <- as.numeric(brfss_sleep_mental$veteran3)
+brfss_sleep_mental$x_bmi5cat <- as.numeric(brfss_sleep_mental$x_bmi5cat)
 
-write.csv(brfss_sleep_mental,"/Users/hehehe/Desktop/brfss_sleep_mental.csv")
+write.csv(brfss_sleep_mental, here("brfss_sleep_mental.csv"))
 ```
 
 ```{r}
-read.csv("/Users/hehehe/Desktop/brfss_sleep_mental.csv")
+data <- brfss_sleep_mental
+data$sleep_well_binary <- ifelse(data$sleep_well == 'good', 1, 0)
+
+ad.test(data$mishopls)$p.value < 0.05
+ad.test(data$misnowrk)$p.value < 0.05
+
+
+
+test_mishopls <- kruskal.test(sleep_well_binary ~ mishopls, data = data)
+test_mistmnt <- chisq.test(table(data$sleep_well_binary, data$mistmnt), correct=FALSE)
+test_misphlpf <- chisq.test(table(data$sleep_well_binary, data$misphlpf), correct=FALSE)
+test_sex <- chisq.test(table(data$sleep_well_binary, data$sex), correct=FALSE)
+test_misnowrk <- kruskal.test(sleep_well_binary ~ misnowrk, data = data)
+test_x_educag <- chisq.test(table(data$sleep_well_binary, data$x_educag), correct=FALSE)
+test_x_incomg <- chisq.test(table(data$sleep_well_binary, data$x_incomg), correct=FALSE)
+test_internet <- chisq.test(table(data$sleep_well_binary, data$internet), correct=FALSE)
+test_veteran <- chisq.test(table(data$sleep_well_binary, data$veteran), correct=FALSE)
+test_x_bmi5cat <- kruskal.test(sleep_well_binary ~ x_bmi5cat, data = data)
+
+# Creating a table to store all results
+results_table <- data.frame(
+  Variable = c("mishopls", "mistmnt", "misphlpf", "sex", "misnowrk", "x_educag", "x_incomg", "internet", "veteran", "x_bmi5cat"),
+  Test_Type = c("Kruskal-Wallis", "Chi-Square", "Chi-Square", "Chi-Square", "Kruskal-Wallis", "Chi-Square", "Chi-Square", "Chi-Square", "Chi-Square", "Kruskal-Wallis"),
+  P_Value = c(test_mishopls$p.value, test_mistmnt$p.value, test_misphlpf$p.value, 
+              test_sex$p.value, test_misnowrk$p.value, test_x_educag$p.value, 
+              test_x_incomg$p.value, test_internet$p.value, test_veteran$p.value, test_x_bmi5cat$p.value)
+)
+
+# Viewing the results table
+print(results_table)
 ```
 
 
-
 ```{r}
-# sleep_well 在不同性别下的分布
-ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(sex))) + 
-  geom_bar(position="stack") +
-  labs(title="Sleep Well Distribution by Gender", x="Sleep Well", y="Frequency") +
-  scale_fill_discrete(name="Gender")
+# show the distribution of x_educag vs. sleep_well
+ggplot(data, aes(x = x_educag, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "x_educag", y = "Percentage", fill = "sleep_well", title = "Barplot of Education Categories VS. Sleep Well") +
+  theme_minimal()
+```
+```{r}
+# mosaic plot
+mosaicplot(table(data$sleep_well, data$x_educag), shade = TRUE, color = TRUE, main = "sleep_well vs. x_educag mosaic plot")
 ```
 
 ```{r}
-mat_sex <- xtabs(~ sleep_well + sex, data = brfss_sleep_mental)
-mat_sex
-
-expected_sex <- chisq.test(data.mat)$expected
-expected_sex
+# show the distribution of mistmnt vs. sleep_well
+ggplot(data, aes(x = mistmnt, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "mistmnt", y = "Percentage", fill = "sleep_well", title = "Barplot of Taking Medicine for Mental Problems VS. Sleep Well") +
+  theme_minimal()
 ```
-**Two overall tests.None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
 ```{r}
-chisq.test(mat_sex,correct=FALSE)
-chisq.test(mat_sex,correct=FALSE)$statistic %>% round(3)
-chisq.te
+# mosaic plot
+mosaicplot(table(data$sleep_well, data$mistmnt), shade = TRUE, color = TRUE, main = "sleep_well vs. mistmnt mosaic plot")
+```
+
+
+```{r}
+# show the distribution of mishopls vs. sleep_well
+ggplot(data, aes(x = mishopls, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "mishopls", y = "Percentage", fill = "sleep_well", title = "Barplot of How Often Feel Hopeless VS. Sleep Well") +
+  theme_minimal()
+```
+
+
+```{r}
+# show the distribution of x_incomg vs. sleep_well
+ggplot(data, aes(x = x_incomg, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "x_incomg", y = "Percentage", fill = "sleep_well", title = "Barplot of Income Categories VS. Sleep Well") +
+  theme_minimal()
+```
+
+```{r}
+# show the distribution of internet vs. sleep_well
+ggplot(data, aes(x = internet, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "internet", y = "Percentage", fill = "sleep_well", title = "Barplot of Used Internet in the Past 30 Days VS. Slepp Well") +
+  theme_minimal()
+```
+```{r}
+# mosaic plot
+mosaicplot(table(data$sleep_well, data$internet), shade = TRUE, color = TRUE, main = "sleep_well vs. internet mosaic plot")
+
+```
+
+
+```{r}
+# show the distribution of veteran3 vs. sleep_well
+ggplot(data, aes(x = veteran3, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "veteran3", y = "Percentage", fill = "sleep_well", title = "Barplot of Veteran Status VS. Sleep Well") +
+  theme_minimal()
+```
+```{r}
+# mosaic plot
+mosaicplot(table(data$sleep_well, data$veteran3), shade = TRUE, color = TRUE, main = "sleep_well vs. veteran mosaic plot")
+```
+
+```{r}
+# show the distribution of sex vs. sleep_well
+ggplot(data, aes(x = sex, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "sex", y = "Percentage", fill = "sleep_well", title = "Barplot of Sex VS. Sleep Well") +
+  theme_minimal()
+```
+```{r}
+# mosaic plot
+mosaicplot(table(data$sleep_well, data$sex), shade = TRUE, color = TRUE, main = "sleep_well vs. sex mosaic plot")
+```
+
+```{r}
+# show the distribution of misnowrk vs. sleep_well
+ggplot(data, aes(x = misnowrk, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "misnowrk", y = "Percentage") +
+  theme_minimal()
+```
+
+```{r}
+# show the distribution of misphlpf vs. sleep_well
+ggplot(data, aes(x = misphlpf, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "misphlpf", y = "Percentage", fill = "sleep_well", title = "Barplot of ") +
+  theme_minimal()
+```
+
+```{r}
+# show the distribution of x_bmi5cat vs. sleep_well
+ggplot(data, aes(x = x_bmi5cat, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "x_bmi5cat", y = "Percentage", fill = "sleep_well", title = "Barplot of BMI Categories VS. Sleep Well") +
+  theme_minimal()
+```
+```{r}
+# mosaic plot
+mosaicplot(table(data$sleep_well, data$x_bmi5cat), shade = TRUE, color = TRUE, main = "sleep_well vs. x_bmi5cat mosaic plot")
+```
+
+```{r}
+# Fit the binary logistic regression model
+model <- glm(sleep_well_binary ~ mistmnt + mishopls + misnowrk + x_incomg + x_educag + sex + veteran3 + I(x_bmi5cat^2), data = data, family =  binomial(link="logit"))
+
+# Summary of the model
+summary(model)
+```
+The model suggests that education level, feelings of hopelessness, income level, gender, veteran status, and BMI (in a non-linear fashion) are important factors in predicting sleep quality. Variables like mental health treatment and internet usage do not appear to have a significant independent effect on sleep quality when controlling for other factors.
