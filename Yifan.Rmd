@@ -173,17 +173,16 @@ test_sex <- chisq.test(table(data$sleep_well_binary, data$sex), correct=FALSE)
 test_misnowrk <- kruskal.test(sleep_well_binary ~ misnowrk, data = data)
 test_x_educag <- chisq.test(table(data$sleep_well_binary, data$x_educag), correct=FALSE)
 test_x_incomg <- chisq.test(table(data$sleep_well_binary, data$x_incomg), correct=FALSE)
-test_internet <- chisq.test(table(data$sleep_well_binary, data$internet), correct=FALSE)
 test_veteran <- chisq.test(table(data$sleep_well_binary, data$veteran), correct=FALSE)
 test_x_bmi5cat <- kruskal.test(sleep_well_binary ~ x_bmi5cat, data = data)
 
 # Creating a table to store all results
 results_table <- data.frame(
-  Variable = c("mishopls", "mistmnt", "misphlpf", "sex", "misnowrk", "x_educag", "x_incomg", "internet", "veteran", "x_bmi5cat"),
-  Test_Type = c("Kruskal-Wallis", "Chi-Square", "Chi-Square", "Chi-Square", "Kruskal-Wallis", "Chi-Square", "Chi-Square", "Chi-Square", "Chi-Square", "Kruskal-Wallis"),
+  Variable = c("mishopls", "mistmnt", "misphlpf", "sex", "misnowrk", "x_educag", "x_incomg", "veteran", "x_bmi5cat"),
+  Test_Type = c("Kruskal-Wallis", "Chi-Square", "Chi-Square", "Chi-Square", "Kruskal-Wallis", "Chi-Square", "Chi-Square", "Chi-Square", "Kruskal-Wallis"),
   P_Value = c(test_mishopls$p.value, test_mistmnt$p.value, test_misphlpf$p.value, 
               test_sex$p.value, test_misnowrk$p.value, test_x_educag$p.value, 
-              test_x_incomg$p.value, test_internet$p.value, test_veteran$p.value, test_x_bmi5cat$p.value)
+              test_x_incomg$p.value, test_veteran$p.value, test_x_bmi5cat$p.value)
 )
 
 # Viewing the results table
