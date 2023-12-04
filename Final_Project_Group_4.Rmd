@@ -1,89 +1,163 @@
 ---
-title: "Untitled"
-author: "Huiye Han"
-date: "2023-11-11"
-output: html_document
+title: "Yifan"
+author: "Hanbo Dong, Huiye Han, Yifan Lu, Zhuoran Li"
+output:
+  html_document:
+    fig_height: 4.5
+    fig_width: 8
+  pdf_document:
+    fig_height: 3.5
+    fig_width: 3.5
+  word_document:
+    toc: no
 ---
 ```{r, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(tidymodels)
 library(janitor)
 library(tableone)
+library(here)
+library(nortest)
 ```
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 brfss2013 <- clean_names(brfss2013)
-head(brfss2013)
-```
-```{r, warning = FALSE, message = FALSE}
-# 看看全部数据结构
-# skimr::skim(brfss2013)
-```
-
-
-```{r, warning = FALSE, message = FALSE}
 # 筛选factor
-factors <- tolower(c("SLEPTIM1",  "X_AGE65YR", "MISNERVS", "MISHOPLS", "MISRSTLS", "MISDEPRD", 
-               "MISEFFRT", "MISWTLES", "MISNOWRK", "MISTMNT", "MISTRHLP", 
-               "MISPHLPF", "EMTSUPRT", "LSATISFY", "SEX", "EDUCA"))
+factors <- tolower(c("SLEPTIM1", "X_AGE65YR", 
+                     "MISHOPLS", "MISTMNT", "MISPHLPF", "MISNOWRK",
+                     "SEX","X_EDUCAG", "X_INCOMG", "X_BMI5CAT","VETERAN3"))
 
 brfss_sleep_mental <- brfss2013 %>%
   select(factors)
-head(brfss_sleep_mental)
-skimr::skim(brfss_sleep_mental)
+# head(brfss_sleep_mental)
+# skimr::skim(brfss_sleep_mental)
+
+# 删除_INCOMG的“DONT KNOW”,
+# 留下internet的Yes和No
+# 留下misphlpf的前五个
+# 留下x_incomg的前几个
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  filter(!x_incomg == "Don’t know/Not sure/Missing") %>%
+  filter(misphlpf %in% c("Disagree strongly", 
+                         "Disagree slightly", 
+                         "Neither agree nor disagree", 
+                         "Agree slightly",
+                         "Agree strongly")) %>%
+  filter(x_incomg %in% c("Less than $15,000", 
+                         "$15,000 to less than $25,000", 
+                         "$25,000 to less than $35,000",
+                         "$35,000 to less than $50,000",
+                         "$50,000 or more")) %>%
+  filter(!x_educag == "9")
 ```
 
 ```{r}
 # 整体缺失值删除
 brfss_sleep_mental_omit <- na.omit(brfss_sleep_mental)
-head(brfss_sleep_mental_omit)
-skimr::skim(brfss_sleep_mental_omit)
-write.csv(brfss_sleep_mental_omit, file = "/Users/hehehe/Desktop/brfss_sleep_mental_omit.csv")
+# head(brfss_sleep_mental_omit)
+# skimr::skim(brfss_sleep_mental_omit)
 ```
+
 ```{r}
 # 根据人口年龄创建adult，是否是成年人（1:成年人， 0:大于65的老年人）
 brfss_sleep_mental_omit <- brfss_sleep_mental_omit %>%
-  mutate(adult= ifelse(x_age65yr == "Age 18 to 64","1","0"))
+  filter(x_age65yr == "Age 18 to 64")
 
-# 根据不同年龄组睡眠评级
-brfss_sleep_mental_adult <- brfss_sleep_mental_omit %>% 
-  filter(adult == 1) %>%
-  mutate(sleep_well = ifelse(sleptim1 >= 6 & sleptim1 <=9 , "1", "0"))
-head(brfss_sleep_mental_adult)
+# sex转换成数值型分类变量
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(sex = case_when(
+    sex == "Male" ~ "1", # 1:Male
+    sex == "Female" ~ "0")) # 0:Female
 
-brfss_sleep_mental_older_adults <- brfss_sleep_mental_omit %>% 
-  filter(adult == 1) %>%
-  mutate(sleep_well = ifelse(sleptim1 >= 6 & sleptim1 <=8 , "1", "0"))
-head(brfss_sleep_mental_older_adults)
+# 睡眠评级
+brfss_sleep_mental <- brfss_sleep_mental_omit %>%
+  mutate(sleep_well = case_when(
+    sleptim1 >= 7 & sleptim1 <= 9 ~ "1",
+    sleptim1 < 7 ~ "0",
+    sleptim1 > 9 ~ "0"))
 
-brfss_sleep_mental <- rbind(brfss_sleep_mental_adult, brfss_sleep_mental_older_adults)
-head(brfss_sleep_mental)
-write.csv(brfss_sleep_mental, file = "/Users/hehehe/Desktop/brfss_sleep_mental.csv")
+# mishopls(失去希望的程度）变成数值型有序分类数据
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(mishopls = case_when(
+    mishopls == "None" ~ "0", # 0：失去希望程度最低
+    mishopls == "A little" ~ "1",
+    mishopls == "Some" ~ "2",
+    mishopls == "Most" ~ "3",
+    mishopls == "All" ~ "4")) # 4: 失去希望程度最高
+
+# mistmnt(是否在接受治疗)
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(mistmnt = case_when(
+    mistmnt == "Yes" ~ "1", # 1：接受治疗
+    mistmnt == "No" ~ "0")) # 0: 没接受治疗
+
+# misphlpf(是否认同身边人关切同情心理疾病患者) 变成数值型有序分类数据
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(misphlpf = case_when(
+    misphlpf == "Disagree strongly" ~ "0", # 0：完全不认同身边人关切同情心理疾病患者
+    misphlpf == "Disagree slightly" ~ "1",
+    misphlpf == "Neither agree nor disagree" ~ "2",
+    misphlpf == "Agree slightly" ~ "3",
+    misphlpf == "Agree strongly" ~ "4")) 
+
+# x_incomg (收入等级划分，调查者分好的) 变成数值型有序分类数据
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(x_incomg = case_when(
+    x_incomg == "Less than $15,000" ~ "1", # 1：收入最少
+    x_incomg == "$15,000 to less than $25,000" ~ "2",
+    x_incomg == "$25,000 to less than $35,000" ~ "3",
+    x_incomg == "$35,000 to less than $50,000" ~ "4",
+    x_incomg == "$50,000 or more" ~ "5"))   # 5: 收入最多
+
+# x_educag(教育等级划分)变成数值型有序分类数据
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(x_educag = case_when(
+    x_educag == "Did not graduate high school" ~ "1", # 1：教育水平最低
+    x_educag == "Graduated high school" ~ "2",
+    x_educag == "Attended college or technical school" ~ "3",
+    x_educag == "Graduated from college or technical school" ~ "4"))
+
+# x_bmi5cat(BMI)变成数值型有序分类变量
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(x_bmi5cat = case_when(
+    x_bmi5cat == "Underweight" ~ "1", # 1：Underweight
+    x_bmi5cat == "Normal Weight" ~ "2",
+    x_bmi5cat == "Overweight" ~ "3",
+    x_bmi5cat == "Obese" ~ "4"))
+
+# veteran3(是否是退伍老兵)变成数值型有序分类变量
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(veteran3 = case_when(
+    veteran3 == "Yes" ~ "1", # 1：是退伍军人
+    veteran3 == "No" ~ "0")) # 0: 不是退伍军人
+
+# 删除x_age65yr列
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  select(!x_age65yr)
+
+# 删除x_educag列
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  filter(!x_educag == "NA")
+
+# convert to numeric
+brfss_sleep_mental$sleptim1 <- as.numeric(brfss_sleep_mental$sleptim1)
+brfss_sleep_mental$mistmnt <- as.numeric(brfss_sleep_mental$mistmnt)
+brfss_sleep_mental$misphlpf <- as.numeric(brfss_sleep_mental$misphlpf)
+brfss_sleep_mental$mishopls <- as.numeric(brfss_sleep_mental$mishopls)
+brfss_sleep_mental$sex <- as.numeric(brfss_sleep_mental$sex)
+brfss_sleep_mental$x_incomg <- as.numeric(brfss_sleep_mental$x_incomg)
+brfss_sleep_mental$x_educag <- as.numeric(brfss_sleep_mental$x_educag)
+brfss_sleep_mental$x_bmi5cat <- as.numeric(brfss_sleep_mental$x_bmi5cat)
+brfss_sleep_mental$veteran3 <- as.numeric(brfss_sleep_mental$veteran3)
+
+write.csv(brfss_sleep_mental,"/Users/hehehe/Desktop/brfss_sleep_mental.csv")
 ```
+
 ```{r}
-# factors <- tolower(c("SLEPTIM1",  "X_AGE65YR", "MISNERVS", "MISHOPLS", "MISRSTLS", "MISDEPRD", 
-#                "MISEFFRT", "MISWTLES", "MISNOWRK", "MISTMNT", "MISTRHLP", 
-#                "MISPHLPF", "EMTSUPRT", "LSATISFY", "SEX", "EDUCA"))
-
-factor <- c("misnervs", "mishopls", "misrstls", "misdeprd", "miseffrt",  "miswtles", "misnowrk", "mistmnt", "mistrhlp", "misphlpf", "emtsuprt", "lsatisfy", "adult", "sex", "educa")
-
-table <- CreateTableOne(vars = factor,
-               strata = "sleep_well",
-               data = brfss_sleep_mental)
-table
+read.csv("/Users/hehehe/Desktop/brfss_sleep_mental.csv")
 ```
 
-```{r}
-summary(table)
-```
 
-# 社会人口学
-## sex
-**sex的t检验和chisq矛盾了，问TA**
-```{r}
-sex_counts <- table(brfss_sleep_mental$sex)
-sex_counts
-```
 
 ```{r}
 # sleep_well 在不同性别下的分布
@@ -92,174 +166,16 @@ ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(sex))) +
   labs(title="Sleep Well Distribution by Gender", x="Sleep Well", y="Frequency") +
   scale_fill_discrete(name="Gender")
 ```
-```{r}
-# T-test for sleep time between sexes
-t.test(sleptim1 ~ sex, data = brfss_sleep_mental)
-```
-**睡眠平均时长在男女间没明显差异，接下来看
-```{r}
-xtabs(~ sleep_well + sex, data = brfss_sleep_mental)
 
-data.mat <- matrix(c(388,7888, 1798, 3024), byrow=TRUE, nrow=2)
-data.mat
+```{r}
+mat_sex <- xtabs(~ sleep_well + sex, data = brfss_sleep_mental)
+mat_sex
 
-expected <- chisq.test(data.mat)$expected
-expected
+expected_sex <- chisq.test(data.mat)$expected
+expected_sex
 ```
 **Two overall tests.None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
 ```{r}
-data.mat <- matrix(c(388,7888, 1798, 3024), byrow=TRUE, nrow=2)
-chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
-chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
-```
-
-
-
-```{r}
-ggplot(brfss_sleep_mental, aes(x = sleptim1, fill=sex)) + 
-  geom_density(alpha=0.5) +
-  labs(title="Sleep Duration Distribution by Sex",
-       x="Sleep Duration (hours)",
-       y="Density")
-```
-```{r}
-ggplot(brfss_sleep_mental, aes(x = sex, fill = sleep_well)) +
-  geom_bar(position = "fill") +
-  labs(y = "Proportion", x = "Sex", fill = "Sleep Well") +
-  ggtitle("Sleep Quality Distribution by Sex")
-```
-
-## Eduction
-```{r}
-# sleep_well 在educa下的分布，以堆叠的方式显示
-ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(educa))) + 
-  geom_bar(position="stack") +
-  labs(title="Sleep Well Distribution by Education Level", 
-       x="Sleep Well", 
-       y="Frequency") +
-  scale_fill_discrete(name="Education Level")
-```
-```{r}
-xtabs(~ sleep_well + educa, data = brfss_sleep_mental)
-
-data.mat <- matrix(c(0, 38, 127, 425, 322, 263, 2, 66, 233, 1457, 1396, 1665), byrow=TRUE, nrow=2)
-data.mat
-
-expected <- chisq.test(data.mat)$expected
-expected
-```
-**Two of the expected counts in this table is too small (<5), so we should use Fisher’s Exact Test.**
-```{r}
-data.mat <- matrix(c(0, 38, 127, 425, 322, 263, 2, 66, 233, 1457, 1396, 1665), byrow=TRUE, nrow=2)
-fisher.test(data.mat, conf.level = 0.9, simulate.p.value = TRUE) 
-```
-# mental health facotrs
-## mishopls
-```{r}
-# During the past 30 days, about how often did you feel hopeless- all of the time, most of the time, some of the time, a little of the time or none of the time?
-ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(mishopls))) + 
-  geom_bar(position="stack") +
-  labs(title="Sleep Well Distribution by Hopeless", 
-       x="Sleep Well", 
-       y="Frequency") +
-  scale_fill_discrete(name="Hopeless Time")
-```
-```{r}
-xtabs(~ sleep_well + mishopls, data = brfss_sleep_mental)
-
-data.mat <- matrix(c(87, 100, 173, 142, 673, 77, 82, 341, 488, 3831), byrow=TRUE, nrow=2)
-data.mat
-
-expected <- chisq.test(data.mat)$expected
-expected
-```
-**None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
-```{r}
-data.mat <- matrix(c(87, 100, 173, 142, 673, 77, 82, 341, 488, 3831), byrow=TRUE, nrow=2)
-chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
-chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
-```
-
-## mistmnt
-```{r}
-# sleep_well 在是否接受心理健康治疗的情况下的分布，以堆叠的方式显示
-ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(mistmnt))) + 
-  geom_bar(position="stack") +
-  labs(title="Sleep Well Distribution by Mental Health Treatment", 
-       x="Sleep Well", 
-       y="Frequency") +
-  scale_fill_discrete(name="Mental Health Treatment")
-```
-```{r}
-xtabs(~ sleep_well + mistmnt, data = brfss_sleep_mental)
-
-data.mat <- matrix(c(336,840, 700, 4122), byrow=TRUE, nrow=2)
-data.mat
-
-expected <- chisq.test(data.mat)$expected
-expected
-```
-**None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
-```{r}
-data.mat <- matrix(c(336,840, 700, 4122), byrow=TRUE, nrow=2)
-chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
-chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
-```
-
-## misphlpf
-```{r}
-# sleep_well 和 misphlpf 
-# Treatment can help people with mental illness lead normal lives. Do you agree slightly or strongly, or disagree slightly or strongly?
-ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(misphlpf))) + 
-  geom_bar(position="stack") +
-  labs(title="Sleep Well Distribution by Attitude towards Mental Health Help", 
-       x="Sleep Well", 
-       y="Frequency") +
-  scale_fill_discrete(name="Mental Health Help Attitude")
-```
-```{r}
-xtabs(~ sleep_well + misphlpf, data = brfss_sleep_mental)
-
-data.mat <- matrix(c(289,296, 122, 195, 1255, 1496, 446, 1021), byrow=TRUE, nrow=2)
-data.mat
-
-expected <- chisq.test(data.mat)$expected
-expected
-```
-**None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
-```{r}
-data.mat <- matrix(c(289,296, 122, 195, 1255, 1496, 446, 1021), byrow=TRUE, nrow=2)
-chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
-chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
-```
-
-## misnowrk
-```{r}
-# 使用 ggplot 绘制 sleep_well 与 misnowrk 之间的箱线图(数值变量)
-# During the past 30 days, for about how many days did a mental health condition or emotional problem keep you from doing your work or other usual activities? (If asked, "usual activities" includes housework, self-care, caregiving, volunteer work, attending school, studies or recreation.)
-ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), y=misnowrk)) +
-  geom_boxplot() +
-  labs(title="Boxplot of MISNOWRK by Sleep Well Category", 
-       x="Sleep Well Category", 
-       y="MISNOWRK")
-```
-
-```{r}
-# 正态性检验
-qqnorm(brfss_sleep_mental$misnowrk, main = "QQ Plot for MISNOWRK with Sleep Well")
-qqline(brfss_sleep_mental$misnowrk, col = "red")
-```
-
-
-```{r}
-# 使用 ggplot 绘制 misnowrk 的直方图 看看正态不
-ggplot(brfss_sleep_mental, aes(x=misnowrk)) +
-  geom_histogram(binwidth = 1, fill="blue", color="black") +
-  labs(title="Histogram of MISNOWRK", x="MISNOWRK", y="Frequency")
-```
-```{r}
-# 非正态，两非配对总体mean检验，非参数Wilcoxon秩和检验
-wilcox.test(misnowrk ~ sleep_well, data = brfss_sleep_mental)
-```
-
-
+chisq.test(mat_sex,correct=FALSE)
+chisq.test(mat_sex,correct=FALSE)$statistic %>% round(3)
+chisq.te
