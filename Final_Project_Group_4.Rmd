@@ -1,25 +1,14 @@
 ---
-title: "Final Project Group 4"
-author: "Hanbo Dong, Huiye Han, Yifan Lu, Zhuoran Li"
-output:
-  html_document:
-    fig_height: 4.5
-    fig_width: 8
-  pdf_document:
-    fig_height: 3.5
-    fig_width: 3.5
-  word_document:
-    toc: no
+title: "Untitled"
+author: "Huiye Han"
+date: "2023-11-11"
+output: html_document
 ---
-https://github.com/cclyfblink/Biostatistics_Final_Project_Group_4
----
-
 ```{r, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(tidymodels)
 library(janitor)
 library(tableone)
-library(here)
 ```
 
 ```{r}
@@ -49,7 +38,7 @@ skimr::skim(brfss_sleep_mental)
 brfss_sleep_mental_omit <- na.omit(brfss_sleep_mental)
 head(brfss_sleep_mental_omit)
 skimr::skim(brfss_sleep_mental_omit)
-write.csv(brfss_sleep_mental_omit, file = here("brfss_sleep_mental_omit.csv"))
+write.csv(brfss_sleep_mental_omit, file = "/Users/hehehe/Desktop/brfss_sleep_mental_omit.csv")
 ```
 ```{r}
 # 根据人口年龄创建adult，是否是成年人（1:成年人， 0:大于65的老年人）
@@ -57,28 +46,19 @@ brfss_sleep_mental_omit <- brfss_sleep_mental_omit %>%
   mutate(adult= ifelse(x_age65yr == "Age 18 to 64","1","0"))
 
 # 根据不同年龄组睡眠评级
-brfss_sleep_mental_adult <- brfss_sleep_mental_omit %>%
+brfss_sleep_mental_adult <- brfss_sleep_mental_omit %>% 
   filter(adult == 1) %>%
-  mutate(sleep_well = case_when(
-    sleptim1 >= 7 & sleptim1 <= 9 ~ "good",
-    sleptim1 < 7 ~ "insufficient",
-    sleptim1 > 9 ~ "excessive",
-    TRUE ~ NA_character_ # for missing or other values
-  ))
+  mutate(sleep_well = ifelse(sleptim1 >= 6 & sleptim1 <=9 , "1", "0"))
+head(brfss_sleep_mental_adult)
 
 brfss_sleep_mental_older_adults <- brfss_sleep_mental_omit %>% 
-  filter(adult != 1) %>%
-  mutate(sleep_well = case_when(
-  sleptim1 >= 7 & sleptim1 <= 8 ~ "good",
-  sleptim1 < 7 ~ "insufficient",
-  sleptim1 > 8 ~ "excessive",
-  TRUE ~ NA_character_ # for missing or other values
-  ))
+  filter(adult == 1) %>%
+  mutate(sleep_well = ifelse(sleptim1 >= 6 & sleptim1 <=8 , "1", "0"))
 head(brfss_sleep_mental_older_adults)
 
 brfss_sleep_mental <- rbind(brfss_sleep_mental_adult, brfss_sleep_mental_older_adults)
 head(brfss_sleep_mental)
-write.csv(brfss_sleep_mental, file = here("brfss_sleep_mental.csv"))
+write.csv(brfss_sleep_mental, file = "/Users/hehehe/Desktop/brfss_sleep_mental.csv")
 ```
 ```{r}
 # factors <- tolower(c("SLEPTIM1",  "X_AGE65YR", "MISNERVS", "MISHOPLS", "MISRSTLS", "MISDEPRD", 
@@ -99,19 +79,12 @@ summary(table)
 
 # 社会人口学
 ## sex
+**sex的t检验和chisq矛盾了，问TA**
 ```{r}
 sex_counts <- table(brfss_sleep_mental$sex)
 sex_counts
 ```
-```{r}
-# 箱线图比较男女睡眠时长
-ggplot(brfss_sleep_mental, aes(x = factor(sex), y = sleptim1, fill = factor(sex))) +
-  geom_boxplot() +
-  labs(title = "Sleep Duration by Gender",
-       x = "Gender",
-       y = "Sleep Duration (hours)",
-       fill = "Gender")
-```
+
 ```{r}
 # sleep_well 在不同性别下的分布
 ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(sex))) + 
@@ -125,7 +98,9 @@ t.test(sleptim1 ~ sex, data = brfss_sleep_mental)
 ```
 **睡眠平均时长在男女间没明显差异，接下来看
 ```{r}
-data.mat <- xtabs(~ sleep_well + sex, data = brfss_sleep_mental)
+xtabs(~ sleep_well + sex, data = brfss_sleep_mental)
+
+data.mat <- matrix(c(388,7888, 1798, 3024), byrow=TRUE, nrow=2)
 data.mat
 
 expected <- chisq.test(data.mat)$expected
@@ -133,6 +108,7 @@ expected
 ```
 **Two overall tests.None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
 ```{r}
+data.mat <- matrix(c(388,7888, 1798, 3024), byrow=TRUE, nrow=2)
 chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
 chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
 ```
@@ -182,32 +158,33 @@ fisher.test(data.mat, conf.level = 0.9, simulate.p.value = TRUE)
 ```{r}
 # During the past 30 days, about how often did you feel hopeless- all of the time, most of the time, some of the time, a little of the time or none of the time?
 ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(mishopls))) + 
-  geom_bar(position="fill") +
+  geom_bar(position="stack") +
   labs(title="Sleep Well Distribution by Hopeless", 
        x="Sleep Well", 
        y="Frequency") +
   scale_fill_discrete(name="Hopeless Time")
 ```
 ```{r}
-data_mishopls <- xtabs(~ sleep_well + mishopls, data = brfss_sleep_mental)
+xtabs(~ sleep_well + mishopls, data = brfss_sleep_mental)
 
+data.mat <- matrix(c(87, 100, 173, 142, 673, 77, 82, 341, 488, 3831), byrow=TRUE, nrow=2)
+data.mat
 
-data_mishopls
-
-expected <- chisq.test(data_mishopls)$expected
+expected <- chisq.test(data.mat)$expected
 expected
 ```
 **None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
 ```{r}
-chisq.test(data_mishopls,correct=FALSE)$statistic %>% round(3)
-chisq.test(data_mishopls,correct=FALSE)$p.value %>% round(3)
+data.mat <- matrix(c(87, 100, 173, 142, 673, 77, 82, 341, 488, 3831), byrow=TRUE, nrow=2)
+chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
+chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
 ```
 
 ## mistmnt
 ```{r}
 # sleep_well 在是否接受心理健康治疗的情况下的分布，以堆叠的方式显示
 ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(mistmnt))) + 
-  geom_bar(position="fill") +
+  geom_bar(position="stack") +
   labs(title="Sleep Well Distribution by Mental Health Treatment", 
        x="Sleep Well", 
        y="Frequency") +
@@ -216,16 +193,17 @@ ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(mistmnt))) +
 ```{r}
 xtabs(~ sleep_well + mistmnt, data = brfss_sleep_mental)
 
-data_mistmnt <- matrix(c(336,840, 700, 4122), byrow=TRUE, nrow=2)
-data_mistmnt
+data.mat <- matrix(c(336,840, 700, 4122), byrow=TRUE, nrow=2)
+data.mat
 
-expected <- chisq.test(data_mistmnt)$expected
+expected <- chisq.test(data.mat)$expected
 expected
 ```
 **None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
 ```{r}
-chisq.test(data_mistmnt,correct=FALSE)$statistic %>% round(3)
-chisq.test(data_mistmnt,correct=FALSE)$p.value %>% round(3)
+data.mat <- matrix(c(336,840, 700, 4122), byrow=TRUE, nrow=2)
+chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
+chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
 ```
 
 ## misphlpf
@@ -233,30 +211,33 @@ chisq.test(data_mistmnt,correct=FALSE)$p.value %>% round(3)
 # sleep_well 和 misphlpf 
 # Treatment can help people with mental illness lead normal lives. Do you agree slightly or strongly, or disagree slightly or strongly?
 ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(misphlpf))) + 
-  geom_bar(position="fill") +
+  geom_bar(position="stack") +
   labs(title="Sleep Well Distribution by Attitude towards Mental Health Help", 
        x="Sleep Well", 
        y="Frequency") +
   scale_fill_discrete(name="Mental Health Help Attitude")
 ```
 ```{r}
-data_misphlpf <- xtabs(~ sleep_well + misphlpf, data = brfss_sleep_mental)
-data_misphlpf
+xtabs(~ sleep_well + misphlpf, data = brfss_sleep_mental)
 
-expected <- chisq.test(data_misphlpf)$expected
+data.mat <- matrix(c(289,296, 122, 195, 1255, 1496, 446, 1021), byrow=TRUE, nrow=2)
+data.mat
+
+expected <- chisq.test(data.mat)$expected
 expected
 ```
 **None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
 ```{r}
-chisq.test(data_misphlpf, correct=FALSE)$statistic %>% round(3)
-chisq.test(data_misphlpf, correct=FALSE)$p.value %>% round(3)
+data.mat <- matrix(c(289,296, 122, 195, 1255, 1496, 446, 1021), byrow=TRUE, nrow=2)
+chisq.test(data.mat,correct=FALSE)$statistic %>% round(3)
+chisq.test(data.mat,correct=FALSE)$p.value %>% round(3)
 ```
 
 ## misnowrk
 ```{r}
 # 使用 ggplot 绘制 sleep_well 与 misnowrk 之间的箱线图(数值变量)
 # During the past 30 days, for about how many days did a mental health condition or emotional problem keep you from doing your work or other usual activities? (If asked, "usual activities" includes housework, self-care, caregiving, volunteer work, attending school, studies or recreation.)
-ggplot(brfss_sleep_mental, aes(x = factor(sleep_well), y = misnowrk)) +
+ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), y=misnowrk)) +
   geom_boxplot() +
   labs(title="Boxplot of MISNOWRK by Sleep Well Category", 
        x="Sleep Well Category", 
