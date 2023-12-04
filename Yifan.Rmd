@@ -29,7 +29,7 @@ brfss2013 <- clean_names(brfss2013)
 # 筛选factor
 factors <- tolower(c("SLEPTIM1", "X_AGE65YR", 
                      "MISHOPLS", "MISTMNT", "MISPHLPF", "MISNOWRK",
-                     "SEX", "X_EDUCAG", "X_INCOMG", "INTERNET", "VETERAN3", "X_BMI5CAT"))
+                     "SEX", "X_EDUCAG", "X_INCOMG", "VETERAN3", "X_BMI5CAT"))
 
 brfss_sleep_mental <- brfss2013 %>%
   select(factors)
@@ -42,7 +42,6 @@ brfss_sleep_mental <- brfss2013 %>%
 # 留下x_incomg的前几个
 brfss_sleep_mental <- brfss_sleep_mental %>%
   filter(!x_incomg == "Don’t know/Not sure/Missing") %>%
-  filter(internet %in% c("Yes", "No")) %>%
   filter(misphlpf %in% c("Disagree strongly", 
                          "Disagree slightly", 
                          "Neither agree nor disagree", 
@@ -106,12 +105,6 @@ brfss_sleep_mental <- brfss_sleep_mental %>%
     sex == "Male" ~ "1", # 1:Male
     sex == "Female" ~ "0")) # 0:Female
 
-# internet(是否上网)转换成数值型分类变量
-brfss_sleep_mental <- brfss_sleep_mental %>%
-  mutate(internet = case_when(
-    internet == "Yes" ~ "1", # 1:上网
-    internet == "No" ~ "0")) # 0:不上网
-
 # x_incomg (收入等级划分，调查者分好的) 变成数值型有序分类数据
 brfss_sleep_mental <- brfss_sleep_mental %>%
   mutate(x_incomg = case_when(
@@ -156,13 +149,12 @@ brfss_sleep_mental$mistmnt <- as.numeric(brfss_sleep_mental$mistmnt)
 brfss_sleep_mental$misphlpf <- as.numeric(brfss_sleep_mental$misphlpf)
 brfss_sleep_mental$mishopls <- as.numeric(brfss_sleep_mental$mishopls)
 brfss_sleep_mental$sex <- as.numeric(brfss_sleep_mental$sex)
-brfss_sleep_mental$internet <- as.numeric(brfss_sleep_mental$internet)
 brfss_sleep_mental$x_incomg <- as.numeric(brfss_sleep_mental$x_incomg)
 brfss_sleep_mental$x_educag <- as.numeric(brfss_sleep_mental$x_educag)
 brfss_sleep_mental$veteran3 <- as.numeric(brfss_sleep_mental$veteran3)
 brfss_sleep_mental$x_bmi5cat <- as.numeric(brfss_sleep_mental$x_bmi5cat)
 
-write.csv(brfss_sleep_mental, here("brfss_sleep_mental.csv"))
+write_csv(brfss_sleep_mental, here("brfss_sleep_mental.csv"))
 ```
 
 ```{r}
