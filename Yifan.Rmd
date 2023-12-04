@@ -309,8 +309,7 @@ mosaicplot(table(data$sleep_well, data$x_bmi5cat), shade = TRUE, color = TRUE, m
 
 ```{r}
 # Fit the binary logistic regression model
-model <- glm(sleep_well_binary ~ x_educag + mistmnt + mishopls + x_incomg+ internet + sex + veteran3 + I(x_bmi5cat^2), 
-             data = data, family =  binomial(link="logit"))
+model <- glm(sleep_well_binary ~ mistmnt + mishopls + misnowrk + x_incomg + x_educag + sex + veteran3 + I(x_bmi5cat^2), data = data, family =  binomial(link="logit"))
 
 # Summary of the model
 summary(model)
