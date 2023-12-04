@@ -197,68 +197,93 @@ results_table <- data.frame(
 # Viewing the results table
 print(results_table)
 ```
-```{r}
 
-```
 
 ```{r}
 # show the distribution of x_educag vs. sleep_well
 ggplot(data, aes(x = x_educag, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "x_educag", y = "Percentage", fill = "sleep_well") +
+  labs(x = "x_educag", y = "Percentage", fill = "sleep_well", title = "Barplot of Education Categories VS. Sleep Well") +
   theme_minimal()
 ```
+```{r}
+# mosaic plot
+mosaicplot(table(data$sleep_well, data$x_educag), shade = TRUE, color = TRUE, main = "sleep_well vs. x_educag mosaic plot")
+```
+
 ```{r}
 # show the distribution of mistmnt vs. sleep_well
 ggplot(data, aes(x = mistmnt, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "mistmnt", y = "Percentage", fill = "sleep_well") +
+  labs(x = "mistmnt", y = "Percentage", fill = "sleep_well", title = "Barplot of Taking Medicine for Mental Problems VS. Sleep Well") +
   theme_minimal()
 ```
+```{r}
+# mosaic plot
+mosaicplot(table(data$sleep_well, data$mistmnt), shade = TRUE, color = TRUE, main = "sleep_well vs. mistmnt mosaic plot")
+```
+
+
 ```{r}
 # show the distribution of mishopls vs. sleep_well
 ggplot(data, aes(x = mishopls, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "mishopls", y = "Percentage", fill = "sleep_well") +
+  labs(x = "mishopls", y = "Percentage", fill = "sleep_well", title = "Barplot of How Often Feel Hopeless VS. Sleep Well") +
   theme_minimal()
 ```
+
+
 ```{r}
 # show the distribution of x_incomg vs. sleep_well
 ggplot(data, aes(x = x_incomg, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "x_incomg", y = "Percentage", fill = "sleep_well") +
+  labs(x = "x_incomg", y = "Percentage", fill = "sleep_well", title = "Barplot of Income Categories VS. Sleep Well") +
   theme_minimal()
 ```
+
 ```{r}
 # show the distribution of internet vs. sleep_well
 ggplot(data, aes(x = internet, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "internet", y = "Percentage", fill = "sleep_well") +
+  labs(x = "internet", y = "Percentage", fill = "sleep_well", title = "Barplot of Used Internet in the Past 30 Days VS. Slepp Well") +
   theme_minimal()
 ```
+```{r}
+# mosaic plot
+mosaicplot(table(data$sleep_well, data$internet), shade = TRUE, color = TRUE, main = "sleep_well vs. internet mosaic plot")
+
+```
+
 
 ```{r}
 # show the distribution of veteran3 vs. sleep_well
 ggplot(data, aes(x = veteran3, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "veteran3", y = "Percentage", fill = "sleep_well") +
+  labs(x = "veteran3", y = "Percentage", fill = "sleep_well", title = "Barplot of Veteran Status VS. Sleep Well") +
   theme_minimal()
 ```
-
+```{r}
+# mosaic plot
+mosaicplot(table(data$sleep_well, data$veteran3), shade = TRUE, color = TRUE, main = "sleep_well vs. veteran mosaic plot")
+```
 
 ```{r}
 # show the distribution of sex vs. sleep_well
 ggplot(data, aes(x = sex, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "sex", y = "Percentage", fill = "sleep_well") +
+  labs(x = "sex", y = "Percentage", fill = "sleep_well", title = "Barplot of Sex VS. Sleep Well") +
   theme_minimal()
+```
+```{r}
+# mosaic plot
+mosaicplot(table(data$sleep_well, data$sex), shade = TRUE, color = TRUE, main = "sleep_well vs. sex mosaic plot")
 ```
 
 ```{r}
 # show the distribution of misnowrk vs. sleep_well
 ggplot(data, aes(x = misnowrk, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "misnowrk", y = "Percentage", fill = "sleep_well") +
+  labs(x = "misnowrk", y = "Percentage") +
   theme_minimal()
 ```
 
@@ -266,7 +291,7 @@ ggplot(data, aes(x = misnowrk, fill = sleep_well)) +
 # show the distribution of misphlpf vs. sleep_well
 ggplot(data, aes(x = misphlpf, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "misphlpf", y = "Percentage", fill = "sleep_well") +
+  labs(x = "misphlpf", y = "Percentage", fill = "sleep_well", title = "Barplot of ") +
   theme_minimal()
 ```
 
@@ -274,8 +299,12 @@ ggplot(data, aes(x = misphlpf, fill = sleep_well)) +
 # show the distribution of x_bmi5cat vs. sleep_well
 ggplot(data, aes(x = x_bmi5cat, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "x_bmi5cat", y = "Percentage", fill = "sleep_well") +
+  labs(x = "x_bmi5cat", y = "Percentage", fill = "sleep_well", title = "Barplot of BMI Categories VS. Sleep Well") +
   theme_minimal()
+```
+```{r}
+# mosaic plot
+mosaicplot(table(data$sleep_well, data$x_bmi5cat), shade = TRUE, color = TRUE, main = "sleep_well vs. x_bmi5cat mosaic plot")
 ```
 
 ```{r}
