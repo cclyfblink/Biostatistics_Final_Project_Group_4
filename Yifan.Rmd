@@ -167,22 +167,23 @@ write.csv(brfss_sleep_mental, here("brfss_sleep_mental.csv"))
 
 ```{r}
 data <- brfss_sleep_mental
+data$sleep_well_binary <- ifelse(data$sleep_well == 'good', 1, 0)
 
 ad.test(data$mishopls)$p.value < 0.05
 ad.test(data$misnowrk)$p.value < 0.05
 
 
 
-test_mishopls <- kruskal.test(sleep_well ~ mishopls, data = data)
-test_mistmnt <- chisq.test(table(data$sleep_well, data$mistmnt), correct=FALSE)
-test_misphlpf <- chisq.test(table(data$sleep_well, data$misphlpf), correct=FALSE)
-test_sex <- chisq.test(table(data$sleep_well, data$sex), correct=FALSE)
-test_misnowrk <- kruskal.test(sleep_well ~ misnowrk, data = data)
-test_x_educag <- chisq.test(table(data$sleep_well, data$x_educag), correct=FALSE)
-test_x_incomg <- chisq.test(table(data$sleep_well, data$x_incomg), correct=FALSE)
-test_internet <- chisq.test(table(data$sleep_well, data$internet), correct=FALSE)
-test_veteran <- chisq.test(table(data$sleep_well, data$veteran), correct=FALSE)
-test_x_bmi5cat <- kruskal.test(sleep_well ~ x_bmi5cat, data = data)
+test_mishopls <- kruskal.test(sleep_well_binary ~ mishopls, data = data)
+test_mistmnt <- chisq.test(table(data$sleep_well_binary, data$mistmnt), correct=FALSE)
+test_misphlpf <- chisq.test(table(data$sleep_well_binary, data$misphlpf), correct=FALSE)
+test_sex <- chisq.test(table(data$sleep_well_binary, data$sex), correct=FALSE)
+test_misnowrk <- kruskal.test(sleep_well_binary ~ misnowrk, data = data)
+test_x_educag <- chisq.test(table(data$sleep_well_binary, data$x_educag), correct=FALSE)
+test_x_incomg <- chisq.test(table(data$sleep_well_binary, data$x_incomg), correct=FALSE)
+test_internet <- chisq.test(table(data$sleep_well_binary, data$internet), correct=FALSE)
+test_veteran <- chisq.test(table(data$sleep_well_binary, data$veteran), correct=FALSE)
+test_x_bmi5cat <- kruskal.test(sleep_well_binary ~ x_bmi5cat, data = data)
 
 # Creating a table to store all results
 results_table <- data.frame(
@@ -197,7 +198,7 @@ results_table <- data.frame(
 print(results_table)
 ```
 ```{r}
-data$sleep_well_binary <- ifelse(data$sleep_well == 'good', 1, 0)
+
 ```
 
 ```{r}
