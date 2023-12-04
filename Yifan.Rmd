@@ -232,19 +232,6 @@ ggplot(data, aes(x = x_incomg, fill = sleep_well)) +
   theme_minimal()
 ```
 
-```{r}
-# show the distribution of internet vs. sleep_well
-ggplot(data, aes(x = internet, fill = sleep_well)) +
-  geom_bar(position = "fill") +
-  labs(x = "internet", y = "Percentage", fill = "sleep_well", title = "Barplot of Used Internet in the Past 30 Days VS. Slepp Well") +
-  theme_minimal()
-```
-```{r}
-# mosaic plot
-mosaicplot(table(data$sleep_well, data$internet), shade = TRUE, color = TRUE, main = "sleep_well vs. internet mosaic plot")
-
-```
-
 
 ```{r}
 # show the distribution of veteran3 vs. sleep_well
