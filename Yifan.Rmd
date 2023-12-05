@@ -164,25 +164,26 @@ data$sleep_well_binary <- ifelse(data$sleep_well == 'good', 1, 0)
 ad.test(data$mishopls)$p.value < 0.05
 ad.test(data$misnowrk)$p.value < 0.05
 
-
-
-test_mishopls <- kruskal.test(sleep_well_binary ~ mishopls, data = data)
+# Mental
 test_mistmnt <- chisq.test(table(data$sleep_well_binary, data$mistmnt), correct=FALSE)
 test_misphlpf <- chisq.test(table(data$sleep_well_binary, data$misphlpf), correct=FALSE)
+test_mishopls <- chisq.test(table(data$sleep_well_binary, data$mishopls), correct=FALSE)
+test_misnowrk <- wilcox.test(table(data$misnowrk, data$sleep_well))
+# Social
 test_sex <- chisq.test(table(data$sleep_well_binary, data$sex), correct=FALSE)
-test_misnowrk <- kruskal.test(sleep_well_binary ~ misnowrk, data = data)
 test_x_educag <- chisq.test(table(data$sleep_well_binary, data$x_educag), correct=FALSE)
 test_x_incomg <- chisq.test(table(data$sleep_well_binary, data$x_incomg), correct=FALSE)
+test_x_bmi5cat <- chisq.test(table(data$sleep_well_binary, data$x_bmi5cat), correct=FALSE)
 test_veteran <- chisq.test(table(data$sleep_well_binary, data$veteran), correct=FALSE)
-test_x_bmi5cat <- kruskal.test(sleep_well_binary ~ x_bmi5cat, data = data)
+
 
 # Creating a table to store all results
 results_table <- data.frame(
-  Variable = c("mishopls", "mistmnt", "misphlpf", "sex", "misnowrk", "x_educag", "x_incomg", "veteran", "x_bmi5cat"),
-  Test_Type = c("Kruskal-Wallis", "Chi-Square", "Chi-Square", "Chi-Square", "Kruskal-Wallis", "Chi-Square", "Chi-Square", "Chi-Square", "Kruskal-Wallis"),
-  P_Value = c(test_mishopls$p.value, test_mistmnt$p.value, test_misphlpf$p.value, 
-              test_sex$p.value, test_misnowrk$p.value, test_x_educag$p.value, 
-              test_x_incomg$p.value, test_veteran$p.value, test_x_bmi5cat$p.value)
+  Variable = c("mistmnt", "misphlpf", "mishopls", "misnowrk",  "sex",  "x_educag", "x_incomg", "x_bmi5cat", "veteran"),
+  Test_Type = c("Chi-Square", "Chi-Square", "Chi-Square","Wilcoxon rank-sum",  "Chi-Square", "Chi-Square", "Chi-Square", "Chi-Square", "Chi-Square"),
+  P_Value = c(test_mistmnt$p.value, test_misphlpf$p.value, test_mishopls$p.value, 
+              test_misnowrk$p.value, test_sex$p.value, test_x_educag$p.value, 
+              test_x_incomg$p.value, test_x_bmi5cat$p.value, test_veteran$p.value)
 )
 
 # Viewing the results table
@@ -194,21 +195,52 @@ print(results_table)
 # show the distribution of x_educag vs. sleep_well
 ggplot(data, aes(x = x_educag, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "x_educag", y = "Percentage", fill = "sleep_well", title = "Barplot of Education Categories VS. Sleep Well") +
-  theme_minimal()
+  labs(x = "x_educag", y = "Percentage", fill = "sleep_well", title = "Barplot of Level of education VS. Sleep Well") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
+```{r}
+X_educag_SleepWell <- xtabs(~ sleep_well + x_educag, data = data)
+X_educag_SleepWell
+
+expected_X_educag_SleepWell <- chisq.test(X_educag_SleepWell)$expected
+expected_X_educag_SleepWell
+```
+```{r}
+chisq.test(X_educag_SleepWell,correct=FALSE)
+chisq.test(X_educag_SleepWell,correct=FALSE)$statistic %>% round(3)
+```
+
 ```{r}
 # mosaic plot
 mosaicplot(table(data$sleep_well, data$x_educag), shade = TRUE, color = TRUE, main = "sleep_well vs. x_educag mosaic plot")
 ```
 
 ```{r}
+data_mnt <- data %>%
+  mutate(mistmnt = case_when(
+    mistmnt == "1" ~ "Yes", # 1：接受治疗
+    mistmnt == "0" ~ "No")) # 0: 没接受治疗
 # show the distribution of mistmnt vs. sleep_well
-ggplot(data, aes(x = mistmnt, fill = sleep_well)) +
+ggplot(data_mnt, aes(x = mistmnt, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "mistmnt", y = "Percentage", fill = "sleep_well", title = "Barplot of Taking Medicine for Mental Problems VS. Sleep Well") +
-  theme_minimal()
+  labs(x = "mistmnt", y = "Percentage", fill = "sleep_well", title = "Barplot of Treatment Condition VS. Sleep Well") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
+
+```{r}
+Mistmnt_SleepWell <- xtabs(~ sleep_well + mistmnt, data = data_mnt)
+Mistmnt_SleepWell
+
+expected_Mistmnt_SleepWell <- chisq.test(Mistmnt_SleepWell)$expected
+expected_Mistmnt_SleepWell
+```
+```{r}
+chisq.test(Mistmnt_SleepWell,correct=FALSE)
+chisq.test(Mistmnt_SleepWell,correct=FALSE)$statistic %>% round(3)
+```
+
 ```{r}
 # mosaic plot
 mosaicplot(table(data$sleep_well, data$mistmnt), shade = TRUE, color = TRUE, main = "sleep_well vs. mistmnt mosaic plot")
@@ -219,67 +251,171 @@ mosaicplot(table(data$sleep_well, data$mistmnt), shade = TRUE, color = TRUE, mai
 # show the distribution of mishopls vs. sleep_well
 ggplot(data, aes(x = mishopls, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "mishopls", y = "Percentage", fill = "sleep_well", title = "Barplot of How Often Feel Hopeless VS. Sleep Well") +
-  theme_minimal()
+  labs(x = "mishopls", y = "Percentage", fill = "sleep_well", title = "Barplot of Hopeless level VS. Sleep Well") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
+```{r}
+Mishopls_SleepWell <- xtabs(~ sleep_well + mishopls, data = data)
+Mishopls_SleepWell
 
+expected_Mishopls_SleepWell <- chisq.test(Mishopls_SleepWell)$expected
+expected_Mishopls_SleepWell
+```
+```{r}
+chisq.test(Mishopls_SleepWell,correct=FALSE)
+chisq.test(Mishopls_SleepWell,correct=FALSE)$statistic %>% round(3)
+```
 
 ```{r}
 # show the distribution of x_incomg vs. sleep_well
 ggplot(data, aes(x = x_incomg, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "x_incomg", y = "Percentage", fill = "sleep_well", title = "Barplot of Income Categories VS. Sleep Well") +
-  theme_minimal()
+  labs(x = "x_incomg", y = "Percentage", fill = "sleep_well", title = "Barplot of Income VS. Sleep Well") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
-
 
 ```{r}
-# show the distribution of veteran3 vs. sleep_well
-ggplot(data, aes(x = veteran3, fill = sleep_well)) +
-  geom_bar(position = "fill") +
-  labs(x = "veteran3", y = "Percentage", fill = "sleep_well", title = "Barplot of Veteran Status VS. Sleep Well") +
-  theme_minimal()
+X_incomg_SleepWell <- xtabs(~ sleep_well + x_incomg, data = data)
+X_incomg_SleepWell
+
+expected_X_incomg_SleepWell <- chisq.test(X_incomg_SleepWell)$expected
+expected_X_incomg_SleepWell
 ```
+```{r}
+chisq.test(X_incomg_SleepWell,correct=FALSE)
+chisq.test(X_incomg_SleepWell,correct=FALSE)$statistic %>% round(3)
+```
+
+```{r}
+data_veteran <- data %>%
+  mutate(veteran3 = case_when(
+    veteran3 == "1" ~ "Yes", # 1：是退伍军人
+    veteran3 == "0" ~ "No"))
+# show the distribution of veteran3 vs. sleep_well
+ggplot(data_veteran, aes(x = veteran3, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "veteran3", y = "Percentage", fill = "sleep_well", title = "Barplot of Military experience VS. Sleep Well") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+```{r}
+Veteran3_SleepWell <- xtabs(~ sleep_well + veteran3, data = data_veteran)
+Veteran3_SleepWell
+
+expected_Veteran3_SleepWell <- chisq.test(Veteran3_SleepWell)$expected
+expected_Veteran3_SleepWell
+```
+```{r}
+chisq.test(Veteran3_SleepWell,correct=FALSE)
+chisq.test(Veteran3_SleepWell,correct=FALSE)$statistic %>% round(3)
+```
+
 ```{r}
 # mosaic plot
 mosaicplot(table(data$sleep_well, data$veteran3), shade = TRUE, color = TRUE, main = "sleep_well vs. veteran mosaic plot")
 ```
 
 ```{r}
+data_sex <- data %>%
+  mutate(sex = case_when(
+    sex == "1" ~ "Male", # 1:Male
+    sex == "0" ~ "Female"))
 # show the distribution of sex vs. sleep_well
-ggplot(data, aes(x = sex, fill = sleep_well)) +
+ggplot(data_sex, aes(x = sex, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "sex", y = "Percentage", fill = "sleep_well", title = "Barplot of Sex VS. Sleep Well") +
-  theme_minimal()
+  labs(x = "sex", y = "Percentage", fill = "sleep_well", title = "Barplot of Gender VS. Sleep Well") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 ```{r}
 # mosaic plot
-mosaicplot(table(data$sleep_well, data$sex), shade = TRUE, color = TRUE, main = "sleep_well vs. sex mosaic plot")
+mosaicplot(table(data_sex$sleep_well, data_sex$sex), shade = TRUE, color = TRUE, main = "Sleep Well vs. Gender mosaic plot")
+```
+```{r}
+Sex_SleepWell <- xtabs(~ sleep_well + sex, data = data_sex)
+Sex_SleepWell
+
+expected_Sex_SleepWell <- chisq.test(Sex_SleepWell)$expected
+expected_Sex_SleepWell
+```
+```{r}
+chisq.test(Sex_SleepWell,correct=FALSE)
+chisq.test(Sex_SleepWell,correct=FALSE)$statistic %>% round(3)
 ```
 
 ```{r}
 # show the distribution of misnowrk vs. sleep_well
 ggplot(data, aes(x = misnowrk, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "misnowrk", y = "Percentage") +
-  theme_minimal()
+  labs(x = "misnowrk", y = "Percentage", title = "Barplot of Days of limited activity\n due to mental illness VS. Sleep Well") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ```{r}
 # show the distribution of misphlpf vs. sleep_well
 ggplot(data, aes(x = misphlpf, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "misphlpf", y = "Percentage", fill = "sleep_well", title = "Barplot of ") +
-  theme_minimal()
+  labs(x = "misphlpf", y = "Percentage", fill = "sleep_well") +
+  ggtitle("Barplot of Recognition of Other's Empathy VS. Sleep Well")+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+```{r}
+Misphlp_SleepWell <- xtabs(~ sleep_well + misphlpf, data = data_mnt)
+Misphlp_SleepWell
+
+expected_Misphlp_SleepWell <- chisq.test(Misphlp_SleepWell)$expected
+expected_Misphlp_SleepWell
+```
+```{r}
+chisq.test(Misphlp_SleepWell,correct=FALSE)
+chisq.test(Misphlp_SleepWell,correct=FALSE)$statistic %>% round(3)
+```
+```{r}
+# show the distribution of misphlpf vs. sleep_well
+ggplot(data, aes(x = misphlpf, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "misphlpf", y = "Percentage", fill = "sleep_well") +
+  ggtitle("Barplot of Recognition of Other's Empathy VS. Sleep Well")+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+Misphlp_SleepWell <- xtabs(~ sleep_well + misphlpf, data = data_mnt)
+Misphlp_SleepWell
+
+expected_Misphlp_SleepWell <- chisq.test(Misphlp_SleepWell)$expected
+expected_Misphlp_SleepWell
+```
+```{r}
+chisq.test(Misphlp_SleepWell,correct=FALSE)
+chisq.test(Misphlp_SleepWell,correct=FALSE)$statistic %>% round(3)
 ```
 
 ```{r}
 # show the distribution of x_bmi5cat vs. sleep_well
 ggplot(data, aes(x = x_bmi5cat, fill = sleep_well)) +
   geom_bar(position = "fill") +
-  labs(x = "x_bmi5cat", y = "Percentage", fill = "sleep_well", title = "Barplot of BMI Categories VS. Sleep Well") +
-  theme_minimal()
+  labs(x = "x_bmi5cat", y = "Percentage", fill = "sleep_well", title = "Barplot of BMI VS. Sleep Well") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
+```{r}
+X_bmi5cat_SleepWell <- xtabs(~ sleep_well + x_bmi5cat, data = data)
+X_bmi5cat_SleepWell
+
+expected_X_bmi5cat_SleepWell <- chisq.test(X_bmi5cat_SleepWell)$expected
+expected_X_bmi5cat_SleepWell
+```
+```{r}
+chisq.test(X_bmi5cat_SleepWell,correct=FALSE)
+chisq.test(X_bmi5cat_SleepWell,correct=FALSE)$statistic %>% round(3)
+```
+
 ```{r}
 # mosaic plot
 mosaicplot(table(data$sleep_well, data$x_bmi5cat), shade = TRUE, color = TRUE, main = "sleep_well vs. x_bmi5cat mosaic plot")
@@ -287,7 +423,7 @@ mosaicplot(table(data$sleep_well, data$x_bmi5cat), shade = TRUE, color = TRUE, m
 
 ```{r}
 # Fit the binary logistic regression model
-model <- glm(sleep_well_binary ~ mistmnt + misphlpf + mishopls + misnowrk + x_incomg + x_educag + sex + veteran3 + I(x_bmi5cat^2) + x_bmi5cat, data = data, family =  binomial(link="logit"))
+model <- glm(sleep_well_binary ~ mistmnt + mishopls + misnowrk + x_incomg + x_educag + sex + veteran3 + I(x_bmi5cat^2), data = data, family =  binomial(link="logit"))
 
 # Summary of the model
 summary(model)

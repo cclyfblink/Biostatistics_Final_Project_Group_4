@@ -21,6 +21,7 @@ library(nortest)
 ```
 
 ```{r, warning = FALSE, message = FALSE}
+load("brfss2013.RData")
 brfss2013 <- clean_names(brfss2013)
 # 筛选factor
 factors <- tolower(c("SLEPTIM1", "X_AGE65YR", 
@@ -150,11 +151,11 @@ brfss_sleep_mental$x_educag <- as.numeric(brfss_sleep_mental$x_educag)
 brfss_sleep_mental$x_bmi5cat <- as.numeric(brfss_sleep_mental$x_bmi5cat)
 brfss_sleep_mental$veteran3 <- as.numeric(brfss_sleep_mental$veteran3)
 
-write.csv(brfss_sleep_mental,"/Users/hehehe/Desktop/brfss_sleep_mental.csv")
+write.csv(brfss_sleep_mental,"Data_folder/brfss_sleep_mental.csv")
 ```
 
 ```{r}
-read.csv("/Users/hehehe/Desktop/brfss_sleep_mental.csv")
+read.csv("Data_folder/brfss_sleep_mental.csv")
 ```
 
 
@@ -171,11 +172,22 @@ ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(sex))) +
 mat_sex <- xtabs(~ sleep_well + sex, data = brfss_sleep_mental)
 mat_sex
 
-expected_sex <- chisq.test(data.mat)$expected
+expected_sex <- chisq.test(mat_sex)$expected
 expected_sex
 ```
 **Two overall tests.None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
 ```{r}
 chisq.test(mat_sex,correct=FALSE)
 chisq.test(mat_sex,correct=FALSE)$statistic %>% round(3)
-chisq.te
+```
+
+```{r}
+ggplot(brfss_sleep_mental, aes(x = misnowrk)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of misnowrk Column",
+       x = "Values",
+       y = "Frequency") +
+  theme_minimal()
+qqnorm(brfss_sleep_mental$misnowrk, main = "QQ Plot of Misnowrk", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+qqline(brfss_sleep_mental$misnowrk, col = 2)
+```
