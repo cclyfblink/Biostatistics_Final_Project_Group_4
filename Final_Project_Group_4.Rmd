@@ -154,10 +154,6 @@ brfss_sleep_mental$veteran3 <- as.numeric(brfss_sleep_mental$veteran3)
 write.csv(brfss_sleep_mental,"Data_folder/brfss_sleep_mental.csv")
 ```
 
-```{r}
-read.csv("Data_folder/brfss_sleep_mental.csv")
-```
-
 
 
 ```{r}
