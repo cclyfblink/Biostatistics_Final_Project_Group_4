@@ -30,7 +30,7 @@ Our dataset comprises nine independent variables encompassing sociodemographic a
 
 **MISHOPLES** (Ordinal): The degree of hopelessness experienced.
 
-**"MISNOWRK** (Numerical): The number of workdays in a month impacted by mental illness.
+**MISNOWRK** (Numerical): The number of workdays in a month impacted by mental illness.
  
 #### Mental factors
 
@@ -78,13 +78,137 @@ library(grid)
 library(patchwork)
 library(kableExtra)
 library(tidyverse)
-data <- read.csv("/Users/hehehe/Library/Containers/com.tencent.xinWeChat/Data/Library/Application Support/com.tencent.xinWeChat/2.0b4.0.9/61b5c02d8d7a441c0d946cc2423b8876/Message/MessageTemp/5517cbfdc025e11443abeece4d22a185/File/data.csv")
+library(here)
 ```
+```{r, echo=FALSE}
+# Load in data
+load("brfss2013.RData")
+brfss2013 <- clean_names(brfss2013)
+
+# Selecting factors
+factors <- tolower(c("SLEPTIM1", "X_AGE65YR", 
+                     "MISHOPLS", "MISTMNT", "MISPHLPF", "MISNOWRK",
+                     "SEX", "X_EDUCAG", "X_INCOMG", "VETERAN3", "X_BMI5CAT"))
+
+brfss_sleep_mental <- brfss2013 %>%
+  select(factors)
+# head(brfss_sleep_mental)
+# skimr::skim(brfss_sleep_mental)
+
+# Remove "Don’t know/Not sure/Missing" for _INCOMG,
+# Keep Yes and No for internet,
+# Keep the first five for misphlpf,
+# Keep the first few for x_incomg
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  filter(!x_incomg == "Don’t know/Not sure/Missing") %>%
+  filter(misphlpf %in% c("Disagree strongly", 
+                         "Disagree slightly", 
+                         "Neither agree nor disagree", 
+                         "Agree slightly",
+                         "Agree strongly")) %>%
+  filter(x_incomg %in% c("Less than $15,000", 
+                         "$15,000 to less than $25,000", 
+                         "$25,000 to less than $35,000",
+                         "$35,000 to less than $50,000",
+                         "$50,000 or more")) %>%
+  filter(!x_educag == "9") %>%
+  filter(veteran3 %in% c("Yes", "No"))
+
+# Delete overall missing values
+brfss_sleep_mental_omit <- na.omit(brfss_sleep_mental)
+# head(brfss_sleep_mental_omit)
+# skimr::skim(brfss_sleep_mental_omit)
+
+# Creating 'adult' based on population age, indicating whether a person is an adult (1: adult, 0: older than 65)
+brfss_sleep_mental_omit <- brfss_sleep_mental_omit %>%
+  filter(x_age65yr == "Age 18 to 64")
+
+# Sleep rating
+brfss_sleep_mental <- brfss_sleep_mental_omit %>%
+  mutate(sleep_well = case_when(
+    sleptim1 >= 7 & sleptim1 <= 9 ~ "good",
+    sleptim1 < 7 ~ "bad",
+    sleptim1 > 9 ~ "bad"))
+
+# Convert mishopls (degree of losing hope) to numeric ordinal data
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(mishopls = case_when(
+    mishopls == "None" ~ "0", # 0: Lowest degree of losing hope
+    mishopls == "A little" ~ "1",
+    mishopls == "Some" ~ "2",
+    mishopls == "Most" ~ "3",
+    mishopls == "All" ~ "4")) # 4: Highest degree of losing hope
+
+# mistmnt (whether receiving treatment)
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(mistmnt = case_when(
+    mistmnt == "Yes" ~ "1", # 1: Receiving treatment
+    mistmnt == "No" ~ "0")) # 0: Not receiving treatment
+
+# Convert misphlpf (whether agreeing with people caring and sympathizing with mental illness patients) to numeric ordinal data
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(misphlpf = case_when(
+    misphlpf == "Disagree strongly" ~ "0", # 0: Completely disagree with people caring for mental illness patients
+    misphlpf == "Disagree slightly" ~ "1",
+    misphlpf == "Neither agree nor disagree" ~ "2",
+    misphlpf == "Agree slightly" ~ "3",
+    misphlpf == "Agree strongly" ~ "4")) 
+
+# Convert sex to numeric categorical variable
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(sex = case_when(
+    sex == "Male" ~ "1", # 1:Male
+    sex == "Female" ~ "0")) # 0:Female
+
+# Convert x_incomg (income level, categorized by the survey) to numeric ordinal data
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(x_incomg = case_when(
+    x_incomg == "Less than $15,000" ~ "1", # 1：lowest income level 
+    x_incomg == "$15,000 to less than $25,000" ~ "2",
+    x_incomg == "$25,000 to less than $35,000" ~ "3",
+    x_incomg == "$35,000 to less than $50,000" ~ "4"))
+
+# Convert x_educag to numeric ordinal data
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(x_educag = case_when(
+    x_educag == "Did not graduate high school" ~ "1", # 1：lowest education level
+    x_educag == "Graduated high school" ~ "2",
+    x_educag == "Attended college or technical school" ~ "3",
+    x_educag == "Graduated from college or technical school" ~ "4"))
+
+# Convert veteran3 to binary data
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(veteran3 = case_when(
+    veteran3 == "Yes" ~ "1", # 1：was veteran
+    veteran3 == "No" ~ "0")) # 0: wasa not veteran
+
+# Covert x_bmi5cat to numeric ordinal data
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  mutate(x_bmi5cat = case_when(
+    x_bmi5cat == "Underweight" ~ "1", # 1：Underweight
+    x_bmi5cat == "Normal weight" ~ "2",
+    x_bmi5cat == "Overweight" ~ "3",
+    x_bmi5cat == "Obese" ~ "4")) # 4: Obese
+
+# Delete x_age65yr column
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  select(!x_age65yr)
+
+# Delete x_educag column
+brfss_sleep_mental <- brfss_sleep_mental %>%
+  filter(!x_educag == "NA")
+
+# write_csv(brfss_sleep_mental, here("data.csv"))
+```
+
 
 ## Results
 
 We first provide a preliminary summary of the data using the tableone table to help determine which independent variables might be related to the dependent variables. In this table, we categorised sleep quality into two categories: "bad (N = 7045)" and "good (N = 12591)", looking at the difference between good and bad sleep quality for each mental and Sociodemographic factor. By observing the P-value, it can be found that there is a significant association between the above nine variables and sleep quality (p < 0.001).
 
+```{r,echo=FALSE}
+data <- read.csv(here("data.csv"))
+```
 
 ```{r,echo=FALSE}
 table1 <- data %>%
@@ -133,10 +257,10 @@ In mental factors, there are three categorical variables ("mistmnt", "misphlpf",
 ```{r,echo=FALSE}
 data_combine <- data %>%
   mutate(mistmnt = case_when(
-    mistmnt == "1" ~ "Yes", # 1：接受治疗
+    mistmnt == "1" ~ "Yes", # 1：receiving treatment
     mistmnt == "0" ~ "No"))%>%
   mutate(veteran3 = case_when(
-    veteran3 == "1" ~ "Yes", # 1：是退伍军人
+    veteran3 == "1" ~ "Yes", # 1：not receiving treatment
     veteran3 == "0" ~ "No")) %>%# 0:
   mutate(sex = case_when(
     sex == "1" ~ "Male", # 1:Male
