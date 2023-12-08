@@ -1,0 +1,245 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo =FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+# Install packages
+library(gtsummary)
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(grid)
+library(patchwork)
+library(kableExtra)
+data <- read.csv("data.csv")
+```
+
+## Results
+
+We first provide a preliminary summary of the data using the tableone table to help determine which independent variables might be related to the dependent variables. In this table, we categorised sleep quality into two categories: "bad (N = 7045)" and "good (N = 12591)", looking at the difference between good and bad sleep quality for each mental and Sociodemographic factor. By observing the P-value, it can be found that there is a significant association between the above nine variables and sleep quality (p < 0.001).
+
+
+```{r}
+table1 <- data %>%
+  select(mistmnt, misphlpf, mishopls, misnowrk, sex, x_educag, x_incomg, veteran3, x_bmi5cat, sleep_well) %>%
+  tbl_summary(
+    by = sleep_well,
+    statistic = list(all_continuous()  ~ "{mean} ({sd})",
+                     all_categorical() ~ "{n}    ({p}%)"),
+    digits = list(all_continuous()  ~ c(2, 2),
+                  all_categorical() ~ c(0, 1)),
+    type = list(mistmnt   ~ "categorical",
+                misphlpf   ~ "categorical",
+                mishopls   ~ "categorical",
+                misnowrk   ~ "continuous",
+                sex   ~ "categorical",
+                x_educag ~ "categorical",
+                x_incomg ~ "categorical",
+                veteran3 ~ "categorical",
+                x_bmi5cat ~ "categorical"
+    )
+  ) %>%
+  add_p(
+    test = list(
+      all_continuous() ~ "wilcox.test",
+      all_categorical() ~ "chisq.test"
+    ),
+    pvalue_fun = function(x) style_pvalue(x, digits = 3)
+  )%>%
+  modify_header(label = "**Variable**") %>%
+  modify_spanning_header(all_stat_cols() ~ "**Sleep Quality**") %>%
+  modify_caption("Table 1: Sociodemographic and Mental Factors by Sleep Quality") %>%
+  as_kable_extra(booktabs = TRUE) %>%
+  # reduce font size to make table fit. 
+  # you may also use the `latex_options = "scale_down"` argument here.
+  kableExtra::kable_styling(bootstrap_options = "striped", full_width = T)
+table1
+```
+
+
+### Visualize and Test the Association
+
+#### Mental Factors
+
+In mental factors, there are three categorical variables ("mistmnt", "misphlpf", and "mishopls") and one numeric variable ("misnowrk"). Stacked bar charts (Table 2) to show the proportion of each category were created for all variables to illustrate the differences between categories. The "Treatment Condition VS. Sleep Quality" and "Hopeless Level VS. Sleep Quality" plots show a decreasing linear trend, indicating that for people undergoing treatment and hopeless, the proportion of those sleeping better in the left bar is larger than in the right bar. Others show an non-linear trend, and for this type of plot, we will analyze it further by using logistic regression models.
+
+```{r}
+data_combine <- data %>%
+  mutate(mistmnt = case_when(
+    mistmnt == "1" ~ "Yes", # 1：接受治疗
+    mistmnt == "0" ~ "No"))%>%
+  mutate(veteran3 = case_when(
+    veteran3 == "1" ~ "Yes", # 1：是退伍军人
+    veteran3 == "0" ~ "No")) %>%# 0:
+  mutate(sex = case_when(
+    sex == "1" ~ "Male", # 1:Male
+    sex == "0" ~ "Female"))
+# All bar charts
+p1<-ggplot(data_combine, aes(x = mistmnt, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "mistmnt", y = "Percentage", fill = "Sleep Quality", title = " Treatment Condition VS. Sleep Quality") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p2<-ggplot(data_combine, aes(x = misphlpf, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "misphlpf", y = "Percentage", fill = "Sleep Quality") +
+  ggtitle(" Recognition of Other's Empathy VS. Sleep Quality")+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p3<-ggplot(data_combine, aes(x = mishopls, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "mishopls", y = "Percentage", fill = "Sleep Quality", title = " Hopeless Level VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p4<-ggplot(data_combine, aes(x = misnowrk, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "misnowrk", y = "Percentage", title = " Days of limited activity\n due to mental illness VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p5 <- ggplot(data_combine, aes(x = sex, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "sex", y = "Percentage", fill = "Sleep Quality", title = " Gender VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p6<-ggplot(data_combine, aes(x = x_educag, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "x_educag", y = "Percentage", fill = "Sleep Quality", title = " Level of education VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p7<-ggplot(data_combine, aes(x = x_incomg, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "x_incomg", y = "Percentage", fill = "Sleep Quality", title = " Income VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p8<-ggplot(data_combine, aes(x = x_bmi5cat, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "x_bmi5cat", y = "Percentage", fill = "Sleep Quality", title = " BMI VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p9<-ggplot(data_combine, aes(x = veteran3, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "veteran3", y = "Percentage", fill = "Sleep Quality", title = " Military experience\n VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+```
+
+```{r, fig.height= 9, fig.width=9}
+# mental
+
+p2 <- p2 + theme(legend.position = "none")
+p3 <- p3 + theme(legend.position = "none")
+p4 <- p4 + theme(legend.position = "none")
+
+combined_plot <- (p1 | p2 ) / (p3 | p4) 
+
+# Display the combined plot with a single shared legend
+combined_plot +
+  plot_layout(guides = "collect") +
+  theme(legend.position = "bottom") +
+  plot_annotation(
+    caption = "Table 2: Bar Charts of Sociodemographic Factors by Sleep Quality. These charts show total values for each category and the relative contribution of each \nsubcategory. The trend of plot shows the diffence between bars.",
+    theme = theme(
+      plot.title = element_text(hjust = 0.5),
+      plot.caption = element_text(hjust = 0)
+    ) 
+  )
+```
+
+To test the association between the two variables, chi-squared tests were chosen for the categorical variables (mistmnt, misphlpf, and mishopls) due to a sufficiently large sample size and expected values larger than 5. For table 4, with all three categorical variables having p-values less than 0.05, we concluded that there is an association between sleep quality and these variables. 
+
+```{r}
+qqnorm(data$misnowrk, main = "", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", cex.main = 1, font.main = 1.5)
+qqline(data$misnowrk, col = 2)
+
+# Add title at the bottom
+mtext("Table 3: QQ Plot of misnowrk. The Q-Q plot exhibit skewness, indicating that the data does not follow a\n normal distribution. ", side = 3, line = 1,  adj = 0, font = 1.5, cex = 0.8)
+```
+
+For the numeric variable (misnowrk), we chose a Wilcoxon rank-sum test because the samples are independent, the data is ordinal, and a qq plot (Table 3) confirmed a non-normal distribution. For table4, the resulting p-value was found to be less than 0.05, leading us to conclude a significant difference between the distributions of both populations.
+
+```{r}
+data$sleep_well_binary <- ifelse(data$sleep_well == 'good', 1, 0)
+
+#ad.test(data$mishopls)$p.value < 0.05
+#ad.test(data$misnowrk)$p.value < 0.05
+
+# Mental
+test_mistmnt <- chisq.test(table(data$sleep_well_binary, data$mistmnt), correct=FALSE)
+test_misphlpf <- chisq.test(table(data$sleep_well_binary, data$misphlpf), correct=FALSE)
+test_mishopls <- chisq.test(table(data$sleep_well_binary, data$mishopls), correct=FALSE)
+test_misnowrk <- wilcox.test(table(data$misnowrk, data$sleep_well))
+# Social
+test_sex <- chisq.test(table(data$sleep_well_binary, data$sex), correct=FALSE)
+test_x_educag <- chisq.test(table(data$sleep_well_binary, data$x_educag), correct=FALSE)
+test_x_incomg <- chisq.test(table(data$sleep_well_binary, data$x_incomg), correct=FALSE)
+test_x_bmi5cat <- chisq.test(table(data$sleep_well_binary, data$x_bmi5cat), correct=FALSE)
+test_veteran <- chisq.test(table(data$sleep_well_binary, data$veteran), correct=FALSE)
+
+mental_data <- data.frame(
+  `Mental Factors` = c("mistmnt", "misphlpf", "mishopls", "misnowrk"),
+  `Test Type` = c("Chi-Square", "Chi-Square", "Chi-Square","Wilcoxon rank-sum"),
+  `P-value` = c(test_mistmnt$p.value, test_misphlpf$p.value, test_mishopls$p.value, 
+              test_misnowrk$p.value)
+)
+mental_data %>%
+  kbl(caption = "Table 4: Table with Test Type and P-value of Mental Factors.") %>%
+  kable_classic(full_width = F, html_font = "Cambria") 
+```
+
+#### Sociodemograohic Factors
+
+To analyze sociodemograohic factors ("sex",  "x_educag", "x_incomg", "x_bmi5cat", "veteran"), We still use stacked bar charts (Table 5) to show the proportion of each category show distinct differences between categories. For example, the "level of education VS. Sleep Quality" and "Income VS. Sleep Quality" plot shows an increasing linear trend, where the percentage of people sleeping quality for the proportion of sleep better in the left bar is less than in the right bar. The "BMI VS. Sleep Quality" show an non-linear trend, and for this type of plot, we will analyze it further by using logistic regression models. However, bar charts for sex and veteran3 variables are not effective at showing differences. 
+
+```{r, fig.height= 6, fig.width=7}
+# Sociodemographic
+p5 <- p5 + theme(legend.position = "none")
+p6 <- p6 + theme(legend.position = "none")
+p7 <- p7 + theme(legend.position = "none")
+p8 <- p8 + theme(legend.position = "none")
+p9 <- p9 + theme(legend.position = "none")
+
+combined_plot1 <- (p5 | p6 ) / (p7 | p8 | p9)
+
+# Assuming you have already defined combined_plot
+combined_plot1 +
+  plot_layout(guides = "collect") +
+  plot_annotation(
+    caption = "Table 5: stacked Bar Charts of Sociodemographic Factors by Sleep Quality. The trend in a plot shows the diffence \nbetween bars.",
+    theme = theme(
+      plot.title = element_text(hjust = 0.5),
+      plot.caption = element_text(hjust = 0)
+    )
+    +
+      theme(legend.position = "top")
+  )
+```
+
+To address this, we used mosaic charts. This plot shows that among males and veterans, there is a relatively higher proportion of poor sleep compared to other sleep levels. Also, among veterans, there is a relatively lower proportion of good sleep compared to other sleep levels.
+
+```{r, fig.width=9}
+# mosaic plot
+library(gridExtra)
+library(grid)
+par(mfrow=c(1,2))
+mo1 <- mosaicplot(table(data$sleep_well, data$veteran3), shade = TRUE, color = TRUE, main = "Sleep Quality VS. Veteran")
+mo2 <- mosaicplot(table(data_combine$sleep_well, data_combine$sex), shade = TRUE, color = TRUE, main = "Sleep Quality VS. Gender")
+# 
+mtext("Table 5: Mosaic Plots for Veteran and Gender by Sleep Quality. In mosaic plot, blue indicates more observations than expected, red indicates \nfewer observations, and white means observed is approximately equal to expected.",side=3,adj = 0, line=-24,outer=TRUE,cex = 0.8)
+```
+
+For all four categorical variables, with expected values larger than 5, the Chi-square test is valid. In table 7,
+all p-values are less than 0.05, we reject the null hypothesis and conclude that there is an association between sociodemographic factors and sleep quality.
+
+```{r}
+social_data <- data.frame(
+  `Sociodemographic Factors` = c("sex",  "x_educag", "x_incomg", "x_bmi5cat", "veteran"),
+  `Test Type` = c("Chi-Square", "Chi-Square", "Chi-Square", "Chi-Square","Chi-Square"),
+  `P-value` = c(test_sex$p.value, test_x_educag$p.value, 
+              test_x_incomg$p.value, test_x_bmi5cat$p.value, test_veteran$p.value)
+)
+social_data %>%
+  kbl(caption = "Table 7: Table with Test Type and P-value of Sociodemographic Factors.") %>%
+  kable_classic(full_width = F, html_font = "Cambria") 
+```
+
+In conclusion, the analyses showed significant associations between sleep qualify and various factors. 
