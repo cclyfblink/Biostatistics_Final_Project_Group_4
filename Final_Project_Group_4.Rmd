@@ -443,34 +443,29 @@ In conclusion, the analyses showed significant associations between sleep qualif
 
 The binary logistic regression model provided insightful results regarding the association between various sociodemographic and mental health factors and the probability of experiencing better sleep among U.S. young adults and adults.
 
-```{r}
-# data <- data %>%
-#   mutate(sleep_well = case_when(
-#     sleep_well== "bad" ~ "0", # 0: bad
-#     sleep_well == "good" ~ "1"))
-```
 
-
-```{r}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 # Fit the binary logistic regression model
-# model <- glm(sleep_well_binary ~ mistmnt + misphlpf + I(misphlpf^2) + mishopls + misnowrk + sex + x_educag + # # x_incomg + veteran3 +  x_bmi5cat + I(x_bmi5cat^2), data = data, family =  binomial(link="logit"))
+model <- glm(sleep_well_binary ~ mistmnt + misphlpf + I(misphlpf^2) + mishopls + misnowrk + sex + x_educag + x_incomg + veteran3 +  x_bmi5cat + I(x_bmi5cat^2), data = data, family =  binomial(link="logit"))
 
+output <- model %>% tidy()
 # View the model summary
-# cbinded <- cbind(output, confint(model))[,-1] %>% round(3)
+cbinded <- cbind(output, confint(model))[,-1] %>% round(3)
 # Knit the table to latex format
-# cbinded %>%
-#   kbl(caption = "<b>TABLE 2:</b> Binary Logistic Regression Analysis with 95% CI") %>%
-#   kable_classic(full_width = F, html_font = "Calibri") %>%
-#  column_spec(1, bold = TRUE)
+cbinded %>%
+  kbl(caption = "<b>Table 8:</b> Binary Logistic Regression Analysis with 95% CI") %>%
+  kable_classic(full_width = F, html_font = "Calibri") %>%
+  column_spec(1, bold = TRUE)
 ```
-Table 2: Binary Logistic Regression Output
 
-Given [BARCHART], the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
+Table 8: Binary Logistic Regression Output
+
+Given barcharts from table 2 and 5, the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
 The regression model showed no difference after the backward stepwise filtering method.
 
 ### Key findings from the logistic regression analysis include:
 
-**Mental Health Variables:**
+Mental Health Variables:
 
 **Mental Health Treatment** (mistmnt): This factor did not significantly alter the odds of better sleep, indicating that treatment status may not directly affect sleep quality within this population.
 
@@ -480,7 +475,7 @@ The regression model showed no difference after the backward stepwise filtering 
 
 **Missing Work Due to Mental Health Issues** (misnowrk): More missed days at work due to mental health issues slightly lowered the odds of better sleep, highlighting the negative influence of mental health on sleep.
 
-**Sociodemographic Variables:**
+Sociodemographic Variables:
 **Gender** (sex): Being male is associated with lower odds of better sleep compared to females, suggesting gender-based differences in sleep quality.
 
 **Education Level** (x_educag): Higher education levels are correlated with increased odds of better sleep, possibly reflecting broader socio-economic and lifestyle factors.
