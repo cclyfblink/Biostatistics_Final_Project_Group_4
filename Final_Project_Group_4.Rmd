@@ -489,6 +489,7 @@ Mental Health Variables:
 **Missing Work Due to Mental Health Issues** (misnowrk): More missed days at work due to mental health issues slightly lowered the odds of better sleep, highlighting the negative influence of mental health on sleep.
 
 Sociodemographic Variables:
+
 **Gender** (sex): Being male is associated with lower odds of better sleep compared to females, suggesting gender-based differences in sleep quality.
 
 **Education Level** (x_educag): Higher education levels are correlated with increased odds of better sleep, possibly reflecting broader socio-economic and lifestyle factors.
