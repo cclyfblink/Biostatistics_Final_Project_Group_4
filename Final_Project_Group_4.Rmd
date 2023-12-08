@@ -1,189 +1,406 @@
----
-title: "Yifan"
-author: "Hanbo Dong, Huiye Han, Yifan Lu, Zhuoran Li"
-output:
-  html_document:
-    fig_height: 4.5
-    fig_width: 8
-  pdf_document:
-    fig_height: 3.5
-    fig_width: 3.5
-  word_document:
-    toc: no
----
-```{r, warning = FALSE, message = FALSE}
+# Final Report
+
+## Introduction
+
+This report investigates a critical public health question: "What mental and sociodemographic factors were significantly associated with sleep quality among young adults and adults in the United States in 2013?" Sleep is a crucial component of overall health, impacting physical, mental, and emotional well-being (Bixler, 2009). The focus on this question is not only academically significant but also of important clinical relevance. Poor sleep has been increasingly problematic in the American population (Knutson et al., 2010). Revealing specific risk factors can guide the development of tailored treatments and interventions, based on patients' mental and social status.
+
+The scope of the study extends beyond merely evaluating sleep qualities. It fundamentally addresses quality of life aspects, including physical, mental, and emotional well-being. Gaining insights into factors that influence sleep patterns is crucial for enhancing sleep hygiene practices and overall public health (Gottlieb et al., 2006). Although existing research has highlighted the impact of sociodemographic and mental health factors on sleep quality, the extent and nature of this impact are still debated, such as the influence of gender and mental illness (Van Cauter & Spiegel, 1999; Hale & Do, 2007; Krueger & Friedman, 2009; Buxton & Marcelli, 2010). Clarifying these relationships requires in-depth statistical research.
+
+The approach taken in this study involves utilising a robust database and validated statistical methods. The aim is to reveal the complex relationships between sleep quality and various influential factors. Our study is intended to contribute to both the academic field and practical applications in public health strategies and individual well-being, addressing the identified limitations and controversies in previous studies.
+
+
+## Method
+
+### Data set details
+
+The dataset under study is derived from the Behavioral Risk Factor Surveillance System, a comprehensive telephone survey conducted in all 50 states in 2013. Our research focuses on young adults(18-25) and adults(26-64) who participated in this survey.
+Referring to the sleep time duration recommendations provided by the National Sleep Foundation, we have deliberately restricted our analysis to individuals aged 18 to 64 (Hirshkowitz et al., 2015). This decision stems from the understanding that sleep quality varies among different age groups.Young adults and adults are recommended to have 7-9 hours of quality sleep per day, whereas older adults are advised to aim for 7-8 hours.
+ 
+In this study, we have adopted an approach where young adults and adults with a sleep duration falling within the range of 7-9 hours are categorized as having good sleep quality. Conversely, individuals with sleep durations below 7 hours or exceeding 9 hours are classified as having poorer sleep quality. This categorization stems from the consideration that both excessively long and excessively short sleep durations are indicative of compromised sleep quality. Therefore, our research primarily focuses on identifying factors influencing sleep quality without making specific differentiations between long and short sleep durations.
+ 
+It is worth noting that if future research endeavors delve into analyzing the factors contributing to long or short sleep durations, it may be beneficial to further categorize the outcome variable into three classes. However, for the purposes of this study, we have chosen to concentrate on a binary classification of sleep quality. This decision provides valuable insights into the factors affecting sleep quality and lays the groundwork for potential avenues of investigation in future research endeavors.
+ 
+Our dataset comprises nine independent variables encompassing sociodemographic and mental health factors. It's worth noting that the majority of the survey questions were multiple-choice, resulting in eight categorical variables and one numerical variable. To handle ordered categorical variables, we applied ordinal encoding, which assigns numerical values to categories based on their natural order. Lower values in these variables indicate lower degrees or negative responses. The variables include:
+ 
+#### Sociodemographic factors
+
+**MISTMNT**(Binary): Currently receiving mental health treatment or not.
+
+**MISPHLPF**(Ordinal):The level of agreement regarding whether individuals believe people around them would provide care for those with mental illness.
+
+**MISHOPLES** (Ordinal): The degree of hopelessness experienced.
+
+**"MISNOWRK** (Numerical): The number of workdays in a month impacted by mental illness.
+ 
+#### Mental factors
+
+**Sex**(Binary): Female =1, Male =0
+
+**X_EDUCA**(Categorical): The level of the highest level of education
+
+**X_INCOMG**(Categorical): The level of income
+
+**X_BMI5CAT**(Categorical): The category of BMI
+
+**VETERAN3** (Binary): Have military experience or not
+ 
+#### Outcome variable
+
+**Sleep_well**(Binary): Sleep quality (Sleep_well = 1:sleep godd; Sleep_well = 0:sleep
+bad )
+ 
+### Research Methodology
+
+Our research follows a systematic approach:
+
+**Descriptive Statistics** We begin by conducting descriptive statistics to visualize the distribution of sleep quality across various factors. This involves utilizing stacked bar charts and mosaic charts to provide a comprehensive overview.
+
+**Association Analysis** We proceed to examine the associations between the nine mental and sociodemographic factors and sleep quality. Our choice of statistical tests depends on the data type. For ordered categorical variables, we generate expected tables to determine whether to employ the Fisher's exact test or the Chi-square test. For numerical variables, normality tests are conducted to guide our selection of the appropriate statistical test.
+
+**Regression Analysis** To establish the relationship between the independent variables and sleep quality, we utilize binary logistic regression due to our binary outcome. Subsequently, we assess whether the data meets the necessary model assumptions.
+
+A key assumption in our analysis was the use of ordinal encoding for categorical variables. This approach involves converting category data with naturally ordered relationships into numerical values, with smaller values typically indicating a lower degree. For example, levels of education were encoded from lowest to highest educational attainment. While this encoding assumes consistency in the differences between each category, it is a necessary simplification for the logistic regression model. 
+
+As our dataset boasts a substantial sample size, we disregard the influence of outliers. A collinearity test through the Variance Inflation Factor (VIF) is also performed. Model adjustments are made through data transformation and the backward stepwise method.
+
+In the end, we conclude by testing the goodness of model fit using the Hosmer and Lemeshow goodness of fit test and calculating the Akaike Information Criterion (AIC).
+
+This rigorous methodology enables us to comprehensively explore the relationships between various factors and sleep quality within our dataset, providing valuable insights into this critical health aspect.
+
+
+```{r,message=FALSE,echo=FALSE}
+# Install packages
+library(gtsummary)
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(grid)
+library(patchwork)
+library(kableExtra)
 library(tidyverse)
-library(tidymodels)
-library(janitor)
-library(tableone)
-library(here)
-library(nortest)
+data <- read.csv("/Users/hehehe/Library/Containers/com.tencent.xinWeChat/Data/Library/Application Support/com.tencent.xinWeChat/2.0b4.0.9/61b5c02d8d7a441c0d946cc2423b8876/Message/MessageTemp/5517cbfdc025e11443abeece4d22a185/File/data.csv")
 ```
 
-```{r, warning = FALSE, message = FALSE}
-load("brfss2013.RData")
-brfss2013 <- clean_names(brfss2013)
-# 筛选factor
-factors <- tolower(c("SLEPTIM1", "X_AGE65YR", 
-                     "MISHOPLS", "MISTMNT", "MISPHLPF", "MISNOWRK",
-                     "SEX","X_EDUCAG", "X_INCOMG", "X_BMI5CAT","VETERAN3"))
+## Results
 
-brfss_sleep_mental <- brfss2013 %>%
-  select(factors)
-# head(brfss_sleep_mental)
-# skimr::skim(brfss_sleep_mental)
+We first provide a preliminary summary of the data using the tableone table to help determine which independent variables might be related to the dependent variables. In this table, we categorised sleep quality into two categories: "bad (N = 7045)" and "good (N = 12591)", looking at the difference between good and bad sleep quality for each mental and Sociodemographic factor. By observing the P-value, it can be found that there is a significant association between the above nine variables and sleep quality (p < 0.001).
 
-# 删除_INCOMG的“DONT KNOW”,
-# 留下internet的Yes和No
-# 留下misphlpf的前五个
-# 留下x_incomg的前几个
-brfss_sleep_mental <- brfss_sleep_mental %>%
-  filter(!x_incomg == "Don’t know/Not sure/Missing") %>%
-  filter(misphlpf %in% c("Disagree strongly", 
-                         "Disagree slightly", 
-                         "Neither agree nor disagree", 
-                         "Agree slightly",
-                         "Agree strongly")) %>%
-  filter(x_incomg %in% c("Less than $15,000", 
-                         "$15,000 to less than $25,000", 
-                         "$25,000 to less than $35,000",
-                         "$35,000 to less than $50,000",
-                         "$50,000 or more")) %>%
-  filter(!x_educag == "9")
+
+```{r,echo=FALSE}
+table1 <- data %>%
+  select(mistmnt, misphlpf, mishopls, misnowrk, sex, x_educag, x_incomg, veteran3, x_bmi5cat, sleep_well) %>%
+  tbl_summary(
+    by = sleep_well,
+    statistic = list(all_continuous()  ~ "{mean} ({sd})",
+                     all_categorical() ~ "{n}    ({p}%)"),
+    digits = list(all_continuous()  ~ c(2, 2),
+                  all_categorical() ~ c(0, 1)),
+    type = list(mistmnt   ~ "categorical",
+                misphlpf   ~ "categorical",
+                mishopls   ~ "categorical",
+                misnowrk   ~ "continuous",
+                sex   ~ "categorical",
+                x_educag ~ "categorical",
+                x_incomg ~ "categorical",
+                veteran3 ~ "categorical",
+                x_bmi5cat ~ "categorical"
+    )
+  ) %>%
+  add_p(
+    test = list(
+      all_continuous() ~ "wilcox.test",
+      all_categorical() ~ "chisq.test"
+    ),
+    pvalue_fun = function(x) style_pvalue(x, digits = 3)
+  )%>%
+  modify_header(label = "**Variable**") %>%
+  modify_spanning_header(all_stat_cols() ~ "**Sleep Quality**") %>%
+  modify_caption("Table 1: Sociodemographic and Mental Factors by Sleep Quality") %>%
+  as_kable_extra(booktabs = TRUE) %>%
+  # reduce font size to make table fit. 
+  # you may also use the `latex_options = "scale_down"` argument here.
+  kableExtra::kable_styling(bootstrap_options = "striped", full_width = T)
+table1
 ```
 
-```{r}
-# 整体缺失值删除
-brfss_sleep_mental_omit <- na.omit(brfss_sleep_mental)
-# head(brfss_sleep_mental_omit)
-# skimr::skim(brfss_sleep_mental_omit)
-```
 
-```{r}
-# 根据人口年龄创建adult，是否是成年人（1:成年人， 0:大于65的老年人）
-brfss_sleep_mental_omit <- brfss_sleep_mental_omit %>%
-  filter(x_age65yr == "Age 18 to 64")
+### Visualize and Test the Association
 
-# sex转换成数值型分类变量
-brfss_sleep_mental <- brfss_sleep_mental %>%
-  mutate(sex = case_when(
-    sex == "Male" ~ "1", # 1:Male
-    sex == "Female" ~ "0")) # 0:Female
+#### Mental Factors
 
-# 睡眠评级
-brfss_sleep_mental <- brfss_sleep_mental_omit %>%
-  mutate(sleep_well = case_when(
-    sleptim1 >= 7 & sleptim1 <= 9 ~ "1",
-    sleptim1 < 7 ~ "0",
-    sleptim1 > 9 ~ "0"))
+In mental factors, there are three categorical variables ("mistmnt", "misphlpf", and "mishopls") and one numeric variable ("misnowrk"). Stacked bar charts to show the proportion of each category were created for all variables to illustrate the differences between categories. The "Treatment Condition VS. Sleep Quality" and "Hopeless Level VS. Sleep Quality" plots show a decreasing linear trend, indicating that for people undergoing treatment and hopeless, the proportion of those sleeping better in the left bar is larger than in the right bar. Others show an non-linear trend, and for this type of plot, we will analyze it further by using logistic regression models.
 
-# mishopls(失去希望的程度）变成数值型有序分类数据
-brfss_sleep_mental <- brfss_sleep_mental %>%
-  mutate(mishopls = case_when(
-    mishopls == "None" ~ "0", # 0：失去希望程度最低
-    mishopls == "A little" ~ "1",
-    mishopls == "Some" ~ "2",
-    mishopls == "Most" ~ "3",
-    mishopls == "All" ~ "4")) # 4: 失去希望程度最高
-
-# mistmnt(是否在接受治疗)
-brfss_sleep_mental <- brfss_sleep_mental %>%
+```{r,echo=FALSE}
+data_combine <- data %>%
   mutate(mistmnt = case_when(
-    mistmnt == "Yes" ~ "1", # 1：接受治疗
-    mistmnt == "No" ~ "0")) # 0: 没接受治疗
-
-# misphlpf(是否认同身边人关切同情心理疾病患者) 变成数值型有序分类数据
-brfss_sleep_mental <- brfss_sleep_mental %>%
-  mutate(misphlpf = case_when(
-    misphlpf == "Disagree strongly" ~ "0", # 0：完全不认同身边人关切同情心理疾病患者
-    misphlpf == "Disagree slightly" ~ "1",
-    misphlpf == "Neither agree nor disagree" ~ "2",
-    misphlpf == "Agree slightly" ~ "3",
-    misphlpf == "Agree strongly" ~ "4")) 
-
-# x_incomg (收入等级划分，调查者分好的) 变成数值型有序分类数据
-brfss_sleep_mental <- brfss_sleep_mental %>%
-  mutate(x_incomg = case_when(
-    x_incomg == "Less than $15,000" ~ "1", # 1：收入最少
-    x_incomg == "$15,000 to less than $25,000" ~ "2",
-    x_incomg == "$25,000 to less than $35,000" ~ "3",
-    x_incomg == "$35,000 to less than $50,000" ~ "4",
-    x_incomg == "$50,000 or more" ~ "5"))   # 5: 收入最多
-
-# x_educag(教育等级划分)变成数值型有序分类数据
-brfss_sleep_mental <- brfss_sleep_mental %>%
-  mutate(x_educag = case_when(
-    x_educag == "Did not graduate high school" ~ "1", # 1：教育水平最低
-    x_educag == "Graduated high school" ~ "2",
-    x_educag == "Attended college or technical school" ~ "3",
-    x_educag == "Graduated from college or technical school" ~ "4"))
-
-# x_bmi5cat(BMI)变成数值型有序分类变量
-brfss_sleep_mental <- brfss_sleep_mental %>%
-  mutate(x_bmi5cat = case_when(
-    x_bmi5cat == "Underweight" ~ "1", # 1：Underweight
-    x_bmi5cat == "Normal Weight" ~ "2",
-    x_bmi5cat == "Overweight" ~ "3",
-    x_bmi5cat == "Obese" ~ "4"))
-
-# veteran3(是否是退伍老兵)变成数值型有序分类变量
-brfss_sleep_mental <- brfss_sleep_mental %>%
+    mistmnt == "1" ~ "Yes", # 1：接受治疗
+    mistmnt == "0" ~ "No"))%>%
   mutate(veteran3 = case_when(
-    veteran3 == "Yes" ~ "1", # 1：是退伍军人
-    veteran3 == "No" ~ "0")) # 0: 不是退伍军人
-
-# 删除x_age65yr列
-brfss_sleep_mental <- brfss_sleep_mental %>%
-  select(!x_age65yr)
-
-# 删除x_educag列
-brfss_sleep_mental <- brfss_sleep_mental %>%
-  filter(!x_educag == "NA")
-
-# convert to numeric
-brfss_sleep_mental$sleptim1 <- as.numeric(brfss_sleep_mental$sleptim1)
-brfss_sleep_mental$mistmnt <- as.numeric(brfss_sleep_mental$mistmnt)
-brfss_sleep_mental$misphlpf <- as.numeric(brfss_sleep_mental$misphlpf)
-brfss_sleep_mental$mishopls <- as.numeric(brfss_sleep_mental$mishopls)
-brfss_sleep_mental$sex <- as.numeric(brfss_sleep_mental$sex)
-brfss_sleep_mental$x_incomg <- as.numeric(brfss_sleep_mental$x_incomg)
-brfss_sleep_mental$x_educag <- as.numeric(brfss_sleep_mental$x_educag)
-brfss_sleep_mental$x_bmi5cat <- as.numeric(brfss_sleep_mental$x_bmi5cat)
-brfss_sleep_mental$veteran3 <- as.numeric(brfss_sleep_mental$veteran3)
-
-write.csv(brfss_sleep_mental,"Data_folder/brfss_sleep_mental.csv")
+    veteran3 == "1" ~ "Yes", # 1：是退伍军人
+    veteran3 == "0" ~ "No")) %>%# 0:
+  mutate(sex = case_when(
+    sex == "1" ~ "Male", # 1:Male
+    sex == "0" ~ "Female"))
+# All bar charts
+p1<-ggplot(data_combine, aes(x = mistmnt, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "mistmnt", y = "Percentage", fill = "Sleep Quality", title = " Treatment Condition VS. Sleep Quality") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p2<-ggplot(data_combine, aes(x = misphlpf, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "misphlpf", y = "Percentage", fill = "Sleep Quality") +
+  ggtitle(" Recognition of Other's Empathy VS. Sleep Quality")+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p3<-ggplot(data_combine, aes(x = mishopls, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "mishopls", y = "Percentage", fill = "Sleep Quality", title = " Hopeless Level VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p4<-ggplot(data_combine, aes(x = misnowrk, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "misnowrk", y = "Percentage", title = " Days of limited activity\n due to mental illness VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p5 <- ggplot(data_combine, aes(x = sex, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "sex", y = "Percentage", fill = "Sleep Quality", title = " Gender VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p6<-ggplot(data_combine, aes(x = x_educag, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "x_educag", y = "Percentage", fill = "Sleep Quality", title = " Level of education VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p7<-ggplot(data_combine, aes(x = x_incomg, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "x_incomg", y = "Percentage", fill = "Sleep Quality", title = " Income VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p8<-ggplot(data_combine, aes(x = x_bmi5cat, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "x_bmi5cat", y = "Percentage", fill = "Sleep Quality", title = " BMI VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+p9<-ggplot(data_combine, aes(x = veteran3, fill = sleep_well)) +
+  geom_bar(position = "fill") +
+  labs(x = "veteran3", y = "Percentage", fill = "Sleep Quality", title = " Military experience\n VS. Sleep Quality") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
 ```
 
+```{r, fig.height= 9, fig.width=9}
+# mental
+
+p2 <- p2 + theme(legend.position = "none")
+p3 <- p3 + theme(legend.position = "none")
+p4 <- p4 + theme(legend.position = "none")
+
+combined_plot <- (p1 | p2 ) / (p3 | p4) 
+
+# Display the combined plot with a single shared legend
+combined_plot +
+  plot_layout(guides = "collect") +
+  theme(legend.position = "bottom") +
+  plot_annotation(
+    caption = "Table 2: Bar Charts of Sociodemographic Factors by Sleep Quality. The trend in a plot shows the diffence between bars.",
+    theme = theme(
+      plot.title = element_text(hjust = 0.5),
+      plot.caption = element_text(hjust = 0)
+    )
+  )
+```
+
+To test the association between the two variables, chi-squared tests were chosen for the categorical variables (mistmnt, misphlpf, and mishopls) due to a sufficiently large sample size and expected values larger than 5. With all three categorical variables having p-values less than 0.05, we concluded that there is an association between sleep quality and these variables. 
+
+```{r,echo=FALSE}
+data$sleep_well_binary <- ifelse(data$sleep_well == 'good', 1, 0)
+
+#ad.test(data$mishopls)$p.value < 0.05
+#ad.test(data$misnowrk)$p.value < 0.05
+
+# Mental
+test_mistmnt <- chisq.test(table(data$sleep_well_binary, data$mistmnt), correct=FALSE)
+test_misphlpf <- chisq.test(table(data$sleep_well_binary, data$misphlpf), correct=FALSE)
+test_mishopls <- chisq.test(table(data$sleep_well_binary, data$mishopls), correct=FALSE)
+test_misnowrk <- wilcox.test(table(data$misnowrk, data$sleep_well))
+# Social
+test_sex <- chisq.test(table(data$sleep_well_binary, data$sex), correct=FALSE)
+test_x_educag <- chisq.test(table(data$sleep_well_binary, data$x_educag), correct=FALSE)
+test_x_incomg <- chisq.test(table(data$sleep_well_binary, data$x_incomg), correct=FALSE)
+test_x_bmi5cat <- chisq.test(table(data$sleep_well_binary, data$x_bmi5cat), correct=FALSE)
+test_veteran <- chisq.test(table(data$sleep_well_binary, data$veteran), correct=FALSE)
+
+mental_data <- data.frame(
+  `Mental Factors` = c("mistmnt", "misphlpf", "mishopls", "misnowrk"),
+  `Test Type` = c("Chi-Square", "Chi-Square", "Chi-Square","Wilcoxon rank-sum"),
+  `P-value` = c(test_mistmnt$p.value, test_misphlpf$p.value, test_mishopls$p.value, 
+              test_misnowrk$p.value)
+)
+mental_data %>%
+  kbl(caption = "Table 3: Table with Test Type and P-value of Mental Factors.") %>%
+  kable_classic(full_width = F, html_font = "Cambria") 
+```
+
+
+For the numeric variable (misnowrk), we chose a Wilcoxon rank-sum test because the samples are independent, the data is ordinal, and a qq plot confirmed a non-normal distribution. The resulting p-value was found to be less than 0.05, leading us to conclude a significant difference between the distributions of both populations.
+
+```{r,echo=FALSE}
+qqnorm(data$misnowrk, main = "", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", cex.main = 1, font.main = 1.5)
+qqline(data$misnowrk, col = 2)
+
+# Add title at the bottom
+mtext("Table 4: QQ Plot of misnowrk. The qq plots no fit the standard line ", side = 3, line = 1,  adj = 0, font = 1.5, cex = 0.8)
+```
+
+#### Sociodemograohic Factors
+
+To analyze sociodemograohic factors ("sex",  "x_educag", "x_incomg", "x_bmi5cat", "veteran"), We still use stacked bar charts to show the proportion of each category show distinct differences between categories. For example, the "level of education VS. Sleep Quality" and "Income VS. Sleep Quality" plot shows an increasing linear trend, where the percentage of people sleeping quality for the proportion of sleep better in the left bar is less than in the right bar. The "BMI VS. Sleep Quality" show an non-linear trend, and for this type of plot, we will analyze it further by using logistic regression models.However, bar charts for sex and veteran3 variables are not effective at showing differences. 
+
+```{r, fig.height= 6, fig.width=7,echo=FALSE}
+# Sociodemographic
+p5 <- p5 + theme(legend.position = "none")
+p6 <- p6 + theme(legend.position = "none")
+p7 <- p7 + theme(legend.position = "none")
+p8 <- p8 + theme(legend.position = "none")
+p9 <- p9 + theme(legend.position = "none")
+
+combined_plot1 <- (p5 | p6 ) / (p7 | p8 | p9)
+
+# Assuming you have already defined combined_plot
+#改不改stacked
+combined_plot1 +
+  plot_layout(guides = "collect") +
+  theme(legend.position = "bottom", legend.box = "horizontal") +
+  plot_annotation(
+    caption = "Table 5: stacked Bar Charts of Sociodemographic Factors by Sleep Quality. The trend in a plot shows the diffence \nbetween bars.",
+    theme = theme(
+      plot.title = element_text(hjust = 0.5),
+      plot.caption = element_text(hjust = 0)
+    )
+  )
+
+```
+
+To address this, we used mosaic charts. This plot shows that among males and veterans, there is a relatively higher proportion of poor sleep compared to other sleep levels. Also, among veterans, there is a relatively lower proportion of good sleep compared to other sleep levels.
+
+```{r, fig.width=9,echo=FALSE}
+# mosaic plot
+library(gridExtra)
+library(grid)
+par(mfrow=c(1,2))
+mo1 <- mosaicplot(table(data$sleep_well, data$veteran3), shade = TRUE, color = TRUE, main = "Sleep Quality VS. Veteran")
+mo2 <- mosaicplot(table(data_combine$sleep_well, data_combine$sex), shade = TRUE, color = TRUE, main = "Sleep Quality VS. Gender")
+#mtext("Table 6: Mosaic Plots for Veteran and Gender by Sleep Quality. In mosaic plot, blue indicates more observations \nthan expected, red indicates fewer observations, and white means observed is approximately equal to expected.", line = 2.5, adj = 0, font = 1.5, cex = 1)
+# Add caption
+#text("Table 5: Mosaic Plots for Veteran and Gender by Sleep Quality. In mosaic plot, blue indicates more observations than \nexpected, red indicates fewer observations, and white means observed is approximately equal to expected.",y = 0, adj = 0, cex = 0.8)
+```
+
+For all four categorical variables, with expected values larger than 5, the Chi-square test is valid. As the p-value is less than 0.05, the Chi-square is significant. 
+```{r,echo=FALSE}
+social_data <- data.frame(
+  `Sociodemographic Factors` = c("sex",  "x_educag", "x_incomg", "x_bmi5cat", "veteran"),
+  `Test Type` = c("Chi-Square", "Chi-Square", "Chi-Square", "Chi-Square","Chi-Square"),
+  `P-value` = c(test_sex$p.value, test_x_educag$p.value, 
+              test_x_incomg$p.value, test_x_bmi5cat$p.value, test_veteran$p.value)
+)
+social_data %>%
+  kbl(caption = "Table 7: Table with Test Type and P-value of Sociodemographic Factors.") %>%
+  kable_classic(full_width = F, html_font = "Cambria") 
+```
+
+In conclusion, the analyses showed significant associations between sleep qualify and various factors. 
+
+
+### Binary Logistic Regression
+
+The binary logistic regression model provided insightful results regarding the association between various sociodemographic and mental health factors and the probability of experiencing better sleep among U.S. young adults and adults.
+
+```{r}
+# data <- data %>%
+#   mutate(sleep_well = case_when(
+#     sleep_well== "bad" ~ "0", # 0: bad
+#     sleep_well == "good" ~ "1"))
+```
 
 
 ```{r}
-# sleep_well 在不同性别下的分布
-ggplot(brfss_sleep_mental, aes(x=factor(sleep_well), fill=factor(sex))) + 
-  geom_bar(position="stack") +
-  labs(title="Sleep Well Distribution by Gender", x="Sleep Well", y="Frequency") +
-  scale_fill_discrete(name="Gender")
-```
+# Fit the binary logistic regression model
+# model <- glm(sleep_well_binary ~ mistmnt + misphlpf + I(misphlpf^2) + mishopls + misnowrk + sex + x_educag + # # x_incomg + veteran3 +  x_bmi5cat + I(x_bmi5cat^2), data = data, family =  binomial(link="logit"))
 
-```{r}
-mat_sex <- xtabs(~ sleep_well + sex, data = brfss_sleep_mental)
-mat_sex
+# View the model summary
+# cbinded <- cbind(output, confint(model))[,-1] %>% round(3)
+# Knit the table to latex format
+# cbinded %>%
+#   kbl(caption = "<b>TABLE 2:</b> Binary Logistic Regression Analysis with 95% CI") %>%
+#   kable_classic(full_width = F, html_font = "Calibri") %>%
+#  column_spec(1, bold = TRUE)
+```
+Table 2: Binary Logistic Regression Output
 
-expected_sex <- chisq.test(mat_sex)$expected
-expected_sex
-```
-**Two overall tests.None of the expected counts in this table is smaller than 5, so we should use X2 test statistic.**
-```{r}
-chisq.test(mat_sex,correct=FALSE)
-chisq.test(mat_sex,correct=FALSE)$statistic %>% round(3)
-```
+Given [BARCHART], the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
+The regression model showed no difference after the backward stepwise filtering method.
 
-```{r}
-ggplot(brfss_sleep_mental, aes(x = misnowrk)) +
-  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
-  labs(title = "Histogram of misnowrk Column",
-       x = "Values",
-       y = "Frequency") +
-  theme_minimal()
-qqnorm(brfss_sleep_mental$misnowrk, main = "QQ Plot of Misnowrk", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
-qqline(brfss_sleep_mental$misnowrk, col = 2)
-```
+### Key findings from the logistic regression analysis include:
+
+**Mental Health Variables:**
+
+**Mental Health Treatment** (mistmnt): This factor did not significantly alter the odds of better sleep, indicating that treatment status may not directly affect sleep quality within this population.
+
+**Recognition of Others' Empathy** (misphlpf): Exhibited a non-linear effect on the odds of better sleep. Initially, increased perception of empathy is associated with higher odds of better sleep, but at very high levels, the trend reverses, suggesting a complex relationship.
+
+**Feelings of Hopelessness** (mishopls): A rise in feelings of hopelessness is linked with decreased odds of better sleep, emphasizing the impact of mental state on sleep.
+
+**Missing Work Due to Mental Health Issues** (misnowrk): More missed days at work due to mental health issues slightly lowered the odds of better sleep, highlighting the negative influence of mental health on sleep.
+
+**Sociodemographic Variables:**
+**Gender** (sex): Being male is associated with lower odds of better sleep compared to females, suggesting gender-based differences in sleep quality.
+
+**Education Level** (x_educag): Higher education levels are correlated with increased odds of better sleep, possibly reflecting broader socio-economic and lifestyle factors.
+
+**Income Level** (x_incomg): Higher income categories are linked with improved odds of better sleep, underscoring the role of economic stability.
+
+**Veteran Status** (veteran3): Veterans report lower odds of better sleep compared to non-veterans, indicating unique challenges in this group.
+
+**BMI** (x_bmi5cat): The relationship between BMI and sleep quality is non-linear. An increase in BMI initially corresponds with higher odds of better sleep, up to a certain point, after which the odds decrease, particularly in higher BMI categories.
+
+
+
+## Conclusion
+Our study offers a comprehensive analysis of how various sociodemographic and mental health factors are associated with the odds of achieving better sleep among the U.S. population aged between 18 to 64. The findings underscore the complexity of sleep quality determinants, revealing significant relationships with mental health aspects and sociodemographic factors.
+
+### Broader Implications:
+This study highlights the importance of a holistic view of sleep quality, emphasizing the complex interaction between mental health and sociodemographic factors. Such an understanding is crucial for developing comprehensive sleep management strategies, moving beyond traditional single-factor treatment models and incorporating a more integrated approach in clinical and public health settings.
+
+### Potential Applications:
+The findings provide valuable insights for healthcare providers, allowing for targeted interventions based on individuals' mental and sociodemographic profiles. Additionally, these insights can inform public health initiatives and policy development, focusing on improving sleep health through mental health support and addressing socio-economic factors.
+
+### Recommendations for Future Research:
+Future studies should aim to establish causal links between the identified factors and sleep quality, expanding upon the observational nature of this study. Longitudinal research and broader variable inclusion can deepen the understanding of sleep quality determinants. Diversifying data sources would also enhance the findings' applicability across various populations.
+
+### Limitations and Considerations:
+The study's limitations include potential selection bias due to a low survey response rate and the assumptions inherent in ordinal encoding of categorical variables. These factors may affect the generalizability of the findings and should be considered in interpreting the results. Future research should account for these limitations to refine our understanding of sleep quality determinants.
+
+
+
+## Bibliography
+
+Bixler, E. (2009). Sleep and society: An epidemiological perspective. Sleep Medicine, 10, S3–S6. m
+
+Buxton, O. M., & Marcelli, E. (2010). Short and long sleep are positively associated with obesity, diabetes, hypertension, and cardiovascular disease among adults in the United States. Social science & medicine, 71(5), 1027-1036.
+
+Gottlieb, D. J., Redline, S., Nieto, F. J., Baldwin, C. M., Newman, A. B., Resnick, H. E., & Punjabi, N. M. (2006). Association of usual sleep duration with hypertension: the Sleep Heart Health Study. Sleep, 29(8), 1009-1014.
+
+Hale, L., & Do, D. P. (2007). Racial differences in self-reports of sleep duration in a population-based study. Sleep, 30(9), 1096-1103.
+
+Hirshkowitz, M., Whiton, K., Albert, S. M., Alessi, C., Bruni, O., DonCarlos, L., ... & Hillard, P. J. A. (2015). National Sleep Foundation’s sleep time duration recommendations: methodology and results summary. Sleep health, 1(1), 40-43.
+
+Knutson, K. L., Van Cauter, E., Rathouz, P. J., DeLeire, T., & Lauderdale, D. S. (2010). Trends in the prevalence of short sleepers in the USA: 1975–2006. Sleep, 33(1), 37.
+
+Krueger, P. M., & Friedman, E. M. (2009). Sleep duration in the United States: a cross-sectional population-based study. American journal of epidemiology, 169(9), 1052-1063.
+
+Van Cauter, E. V. E., & Spiegel, K. (1999). Sleep as a mediator of the relationship between socioeconomic status and health: a hypothesis. Annals of the New York Academy of Sciences, 896(1), 254-261.
+
+
+
