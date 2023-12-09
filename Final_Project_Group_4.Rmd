@@ -473,8 +473,62 @@ cbinded %>%
 
 Table 8: Binary Logistic Regression Output
 
+
 Given barcharts from table 2 and 5, the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
 The regression model showed no difference after the backward stepwise filtering method.
+
+Given [BARCHART], the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
+The regression model showed no difference after the backward stepwise filtering method.
+
+
+### Model Fit Analysis
+
+```{r}
+# Perform the Hosmer-Lemeshow test
+hoslem.test(y = model$fitted.values, x = model$model$sleep_well_binary, g = 10)
+
+# Compute the ROC curve and AUC
+roc_curve <- roc(response = model$y, predictor = fitted(model))
+auc_value <- auc(roc_curve)
+
+# Print the AUC
+print(auc_value)
+
+# Extract and print the Residual Deviance
+residual_deviance <- deviance(model)
+cat("Residual Deviance:", residual_deviance, "\n")
+
+# Extract and print the AIC
+aic_value <- AIC(model)
+cat("AIC:", aic_value, "\n")
+
+# Print the summary of the model to get detailed information
+model_summary <- summary(model)
+
+# Extract degrees of freedom
+residual_dof <- model_summary$df.residual
+null_dof <- model_summary$df.null
+
+# Print the degrees of freedom
+cat("Residual Degrees of Freedom:", residual_dof, "\n")
+cat("Null Degrees of Freedom:", null_dof, "\n")
+```
+
+### Model Fit Analysis
+
+**Hosmer and Lemeshow Goodness of Fit Test**
+The fit of the statistical model was first assessed using the Hosmer and Lemeshow Goodness of Fit Test. This test resulted in an chi-squared value of 13.349 with 8 degrees of freedom, and a p-value of 0.1004. This suggests that the observed values and the model's predictions do not significantly differ, indicating a reasonable fit to the data. However, it's important to note that relying solely on the p-value does not fully encapsulate the model's overall fit.
+
+**Residual Deviance vs. Residual Degrees of Freedom**
+A further evaluation involved comparing the model's Residual Deviance against its Residual Degrees of Freedom. Typically, a smaller difference between these two values indicates a better fit. In this analysis, a noticeable difference was found, pointing towards potential room for improvement in the model’s fit.
+
+**Area Under the Curve (AUC)**
+The Area Under the Curve (AUC), which measures the model's capability to differentiate between various outcomes (in this case, levels of sleep quality), was calculated to be 0.64. While this is better than random chance, it is still below the acceptable level for discriminative ability.
+
+**Implications of Model Fit**
+From these assessments, it is inferred that the model is not sufficiently refined, but on the right track. It provides a starting point for accurate prediction of sleep quality. Future studies could adjust existing variables or incorporate new relevant variables to enhance the model’s accuracy. On the other hand, although there are some limitations in prediction, the inference from this model provides valuable insights into the factors influencing sleep quality, which will be further explored through the analysis of the model's coefficients.
+
+
 
 ### Key findings from the logistic regression analysis include:
 
