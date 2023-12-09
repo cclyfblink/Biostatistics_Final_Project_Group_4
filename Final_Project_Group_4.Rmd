@@ -86,6 +86,7 @@ library(here)
 library(janitor)
 library(broom)
 library(ResourceSelection)
+library(pROC)
 ```
 
 ```{r, echo=FALSE}
