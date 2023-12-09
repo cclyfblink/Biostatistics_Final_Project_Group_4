@@ -73,7 +73,6 @@ knitr::opts_chunk$set(echo =FALSE, message = FALSE, warning = FALSE)
 ```
 
 ```{r,message=FALSE,echo=FALSE}
-# Install packages
 library(gtsummary)
 library(dplyr)
 library(readr)
@@ -87,6 +86,7 @@ library(janitor)
 library(broom)
 library(ResourceSelection)
 library(pROC)
+library(tidyr)
 ```
 
 ```{r, echo=FALSE}
@@ -172,10 +172,11 @@ brfss_sleep_mental <- brfss_sleep_mental %>%
 # Convert x_incomg (income level, categorized by the survey) to numeric ordinal data
 brfss_sleep_mental <- brfss_sleep_mental %>%
   mutate(x_incomg = case_when(
-    x_incomg == "Less than $15,000" ~ "1", # 1：lowest income level 
+    x_incomg == "Less than $15,000" ~ "1",
     x_incomg == "$15,000 to less than $25,000" ~ "2",
     x_incomg == "$25,000 to less than $35,000" ~ "3",
-    x_incomg == "$35,000 to less than $50,000" ~ "4"))
+    x_incomg == "$35,000 to less than $50,000" ~ "4",
+    x_incomg == "$50,000 or more" ~ "5")) 
 
 # Convert x_educag to numeric ordinal data
 brfss_sleep_mental <- brfss_sleep_mental %>%
@@ -213,16 +214,8 @@ brfss_sleep_mental <- brfss_sleep_mental %>%
 
 
 ```{r}
-# Install packages
-library(gtsummary)
-library(dplyr)
-library(readr)
-library(ggplot2)
-library(grid)
-library(patchwork)
-library(kableExtra)
-library(tidyr)
-data <- read.csv("data.csv")
+
+data <- brfss_sleep_mental
 ```
 
 ## Results
@@ -459,6 +452,19 @@ In conclusion, the analyses showed significant associations between sleep qualif
 ### Binary Logistic Regression
 
 The binary logistic regression model provided insightful results regarding the association between various sociodemographic and mental health factors and the probability of experiencing better sleep among U.S. young adults and adults.
+
+```{r}
+# process data for regression
+data$sleptim1 <- as.numeric(data$sleptim1)
+data$mistmnt <- as.numeric(data$mistmnt)
+data$misphlpf <- as.numeric(data$misphlpf)
+data$mishopls <- as.numeric(data$mishopls)
+data$sex <- as.numeric(data$sex)
+data$x_incomg <- as.numeric(data$x_incomg)
+data$x_educag <- as.numeric(data$x_educag)
+data$veteran3 <- as.numeric(data$veteran3)
+data$x_bmi5cat <- as.numeric(data$x_bmi5cat)
+```
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE, include = FALSE}
 model_linear <- glm(sleep_well_binary ~ mistmnt + misphlpf + mishopls + misnowrk + sex + x_educag + x_incomg + veteran3 +  x_bmi5cat, data = data, family =  binomial(link="logit"))
