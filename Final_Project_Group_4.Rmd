@@ -568,7 +568,7 @@ The regression model showed no difference after the backward stepwise filtering 
 
 ### Model Fit Analysis
 
-```{r}
+```{r, echo=FALSE, results='asis'}
 # Perform the Hosmer-Lemeshow test
 hoslem_test_result <- hoslem.test(y = model$fitted.values, x = model$model$sleep_well_binary, g = 10)
 
