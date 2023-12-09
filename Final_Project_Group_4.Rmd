@@ -524,6 +524,18 @@ data$x_bmi5cat <- as.numeric(data$x_bmi5cat)
 model_linear <- glm(sleep_well_binary ~ mistmnt + misphlpf + mishopls + misnowrk + sex + x_educag + x_incomg + veteran3 +  x_bmi5cat, data = data, family =  binomial(link="logit"))
 ```
 
+
+#### Assumption Check
+
+```{r}
+# Checking for multicollinearity
+vif(model_linear)  
+```
+
+These VIF values all fall between 1 and 5, suggesting that multicollinearity is not likely to be influencing the estimates of the coefficients significantly. This indicates that the regression model is based on independent variables that are not excessively linearly related, allowing for a more reliable interpretation of each variable's effect on sleep quality.
+
+
+
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 # Fit the binary logistic regression model
 model <- glm(sleep_well_binary ~ mistmnt + misphlpf + I(misphlpf^2) + mishopls + misnowrk + sex + x_educag + x_incomg + veteran3 +  x_bmi5cat + I(x_bmi5cat^2), data = data, family =  binomial(link="logit"))
@@ -539,6 +551,7 @@ cbinded %>%
 ```
 
 From Figure 1 and 3, the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
+
 ```{r message=FALSE, warning=FALSE, echo=FALSE, include = FALSE}
 adjusted <- stats::step(model, direction = "backward")
 summary(adjusted)
