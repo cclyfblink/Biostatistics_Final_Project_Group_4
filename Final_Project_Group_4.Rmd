@@ -276,7 +276,7 @@ table1 <- data %>%
   as_kable_extra(booktabs = TRUE) %>%
   # reduce font size to make table fit. 
   # you may also use the `latex_options = "scale_down"` argument here.
-  kable_classic(full_width = F, html_font = "Cambria") 
+  kable_classic(full_width = T, html_font = "Cambria") 
 table1
 ```
 
