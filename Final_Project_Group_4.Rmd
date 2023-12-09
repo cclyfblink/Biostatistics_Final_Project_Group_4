@@ -1,5 +1,5 @@
 ---
-title: "Final Project Report Group 4"
+title: "Final Project Report Group 4: The Association of Mental and Sociodemographic Factors on Sleep Quality"
 author: "Hanbo Dong, Huiye Han, Yifan Lu, Zhuoran Li"
 output:
   html_document:
@@ -41,6 +41,7 @@ The variables include:
 **MISHOPLES** (Ordinal): The degree of hopelessness experienced.
 
 **MISNOWRK** (Numerical): The number of workdays in a month impacted by mental illness.
+
  
 #### Sociodemographic factors 
 
@@ -54,10 +55,12 @@ The variables include:
 
 **VETERAN3** (Binary): Have military experience or not
  
+ 
 #### Outcome variable
 
-**Sleep_well**(Binary): Sleep quality (Sleep_well = 1:sleep godd; Sleep_well = 0:sleep
+**Sleep_well**(Binary): Sleep quality (Sleep_well = 1:sleep good; Sleep_well = 0:sleep
 bad )
+
 
 ### Research Methodology
 
@@ -244,22 +247,23 @@ data <- brfss_sleep_mental
 
 ```{r}
 table1 <- data %>%
-  select(mistmnt, misphlpf, mishopls, misnowrk, sex, x_educag, x_incomg, veteran3, x_bmi5cat, sleep_well) %>%
+  select(MISTMNT = mistmnt, MISPHLPF = misphlpf, MISHOPLES = mishopls, MISNOWRK = misnowrk, 
+         Sex = sex, X_EDUCA = x_educag, X_INCOMG = x_incomg, VETERAN3 = veteran3, X_BMI5CAT = x_bmi5cat, Sleep_well = sleep_well) %>%
   tbl_summary(
-    by = sleep_well,
+    by = Sleep_well,
     statistic = list(all_continuous()  ~ "{mean} ({sd})",
                      all_categorical() ~ "{n}    ({p}%)"),
     digits = list(all_continuous()  ~ c(2, 2),
                   all_categorical() ~ c(0, 1)),
-    type = list(mistmnt   ~ "categorical",
-                misphlpf   ~ "categorical",
-                mishopls   ~ "categorical",
-                misnowrk   ~ "continuous",
-                sex   ~ "categorical",
-                x_educag ~ "categorical",
-                x_incomg ~ "categorical",
-                veteran3 ~ "categorical",
-                x_bmi5cat ~ "categorical"
+    type = list(MISTMNT   ~ "categorical",
+                MISPHLPF   ~ "categorical",
+                MISHOPLES   ~ "categorical",
+                MISNOWRK   ~ "continuous",
+                Sex   ~ "categorical",
+                X_EDUCA ~ "categorical",
+                X_INCOMG ~ "categorical",
+                VETERAN3 ~ "categorical",
+                X_BMI5CAT ~ "categorical"
     )
   ) %>%
   add_p(
@@ -273,8 +277,8 @@ table1 <- data %>%
   modify_spanning_header(all_stat_cols() ~ "**Sleep Quality**") %>%
   modify_caption("Table 1: Sociodemographic and Mental Factors by Sleep Quality") %>%
   as_kable_extra(booktabs = TRUE) %>%
-  # reduce font size to make table fit. 
-  kable_classic(full_width = T, html_font = "Cambria") 
+  kable_classic(full_width = TRUE, html_font = "Cambria") 
+
 table1
 ```
 
@@ -685,7 +689,7 @@ Van Cauter, E. V. E., & Spiegel, K. (1999). Sleep as a mediator of the relations
 
 ## Appendix 
 
-Appendix 1: Expected values for all categorical variables. 
+Appendix 1: Observed and Expected Values for All Categorical Variables. 
 
 ```{r, echo=FALSE, results='asis'}
 # Initialize two lists to store the kable formatted tables
