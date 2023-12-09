@@ -214,11 +214,10 @@ brfss_sleep_mental <- brfss_sleep_mental %>%
 
 
 ```{r}
-
+# Load data
 data <- brfss_sleep_mental
 ```
 
-## Results
 ## Results
 
 We first provide a preliminary summary of the data using the tableone (table 1) to help determine which independent variables might be related to the dependent variables. In this table, we categorised sleep quality into two categories: "bad (N = 7045)" and "good (N = 12591)", looking at the difference between good and bad sleep quality for each mental and Sociodemographic factors. By observing the P-value, it can be found that there is a significant association between the above nine variables and sleep quality (p < 0.001).
