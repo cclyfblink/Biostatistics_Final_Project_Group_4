@@ -601,8 +601,6 @@ cat("Residual Degrees of Freedom:", residual_dof, "\n")
 cat("Null Degrees of Freedom:", null_dof, "\n")
 ```
 
-### Model Fit Analysis
-
 **Hosmer and Lemeshow Goodness of Fit Test**
 The fit of the statistical model was first assessed using the Hosmer and Lemeshow Goodness of Fit Test. This test resulted in an chi-squared value of 13.349 with 8 degrees of freedom, and a p-value of 0.1004. This suggests that the observed values and the model's predictions do not significantly differ, indicating a reasonable fit to the data. However, it's important to note that relying solely on the p-value does not fully encapsulate the model's overall fit.
 
