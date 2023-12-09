@@ -26,7 +26,7 @@ The variables include:
 
 **MISTMNT**(Binary): Currently receiving mental health treatment or not.
 
-**MISPHLPF**(Ordinal):The level of agreement regarding whether individuals believe people around them would provide care for those with mental illness.
+**MISPHLPF**(Ordinal):The level of recognition of others' empathy
 
 **MISHOPLES** (Ordinal): The degree of hopelessness experienced.
 
@@ -220,8 +220,6 @@ data <- brfss_sleep_mental
 
 ## Results
 
-We first provide a preliminary summary of the data using the tableone (table 1) to help determine which independent variables might be related to the dependent variables. In this table, we categorised sleep quality into two categories: "bad (N = 7045)" and "good (N = 12591)", looking at the difference between good and bad sleep quality for each mental and Sociodemographic factors. By observing the P-value, it can be found that there is a significant association between the above nine variables and sleep quality (p < 0.001).
-
 
 ```{r}
 table1 <- data %>%
@@ -260,11 +258,12 @@ table1 <- data %>%
 table1
 ```
 
+We first provide a preliminary summary of the data using the tableone (table 1) to help determine which independent variables might be related to the dependent variables. In this table, we categorised sleep quality into two categories: "bad (N = 7045)" and "good (N = 12591)", looking at the difference between good and bad sleep quality for each mental and Sociodemographic factors. By observing the P-value, it can be found that there is a significant association between the above nine variables and sleep quality (p < 0.001).
+
 
 ### Visualize and Test the Association
 
 #### Mental Factors
-
 
 
 ```{r}
@@ -343,22 +342,32 @@ final_plot <- combined_plot +
 print(final_plot)
 ```
 
-In mental factors, there are three categorical variables, including "currently receiving mental health treatment or not", "the level of agreement regarding whether people around them would provide care for those with mental illness", "the degree of hopelessness experienced" ("mistmnt", "misphlpf", and "mishopls") and one numeric variable, the number of workdays in a month impacted by mental illness ("misnowrk"). Stacked bar charts (figure 1) show the proportion of each category were created for all variables to illustrate the differences between categories. The "Treatment Condition VS. Sleep Quality" and "Hopeless Level VS. Sleep Quality" plots show a decreasing linear trend, indicating that for people undergoing mental health treatment or having highest level of hopelessness have relatively worse sleep quality. Others show an non-linear trend. Those who moderately agreed that people with mental problem would be cared had better sleep quality, while those who agreed it at all or not at all had relatively poor sleep quality. This is a clear quadratic term trend, where the highest or lowest point occurs in the center of the distribution. 
+Categorical Variables
+Stacked bar charts were used to visually compare the proportion of individuals with varying levels of sleep quality across different mental health-related categories (Figure 1). The "Treatment Condition vs. Sleep Quality" chart reveals a decreasing trend, where individuals currently receiving mental health treatment tend to report worse sleep quality. Similarly, the "Hopeless Level vs. Sleep Quality" chart shows that those with higher levels of hopelessness experience poorer sleep quality.
 
-To test the association between the two variables, chi-squared tests were chosen for the categorical variables (mistmnt, misphlpf, and mishopls) due to a sufficiently large sample size and expected values larger than 5. 
+Interestingly, the chart illustrating "Recognition of Others' Empathy vs. Sleep Quality" displays a non-linear relationship. Individuals who moderately has recognition of others' empathy report better sleep quality, while those at the extremes (strong agreement or disagreement) tend to have poorer sleep quality. This pattern indicates a quadratic trend, where sleep quality peaks with moderate levels of perceived empathy and decreases at both lower and higher levels.
 
-For the number of affected workdays, it is obviously not normally distributed shown by the bar plot. The normality is further tested by the qqplot below.
+To statistically examine the association between these categorical mental health factors and sleep quality, chi-squared tests were conducted for "currently receiving mental health treatment" (mistmnt), "level of agreement on care provision for mental illness" (misphlpf), and "degree of hopelessness" (mishopls), given the large sample size of our data and expected cell frequencies exceeding the threshold of 5 (See Appendix 1).
+
+Numeric Variable
+The variable representing the number of workdays affected by mental health issues (misnowrk) was initially assessed with a bar chart, which indicated a non-normal distribution. This was further evidenced by a subsequent QQ-plot analysis.
 
 ```{r}
+# Increase the bottom margin to make space for the caption
+par(mar = c(5, 4, 4, 2) + 0.1)
+
+# Create the QQ plot
 qqnorm(data$misnowrk, main = "", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", cex.main = 1, font.main = 1.5)
 qqline(data$misnowrk, col = 2)
 
 # Add caption at the bottom of the plot
 mtext("Figure 2: QQ Plot of misnowrk. The Q-Q plot exhibits skewness, indicating that the data does not follow a normal distribution.", 
-      side = 1, line = 4, adj = 0, font = 1.5, cex = 0.8)
+      side = 1, line = 2, adj = 0, font = 1.5, cex = 0.8)
 ```
 
-For the numeric variable (misnowrk), we chose a Wilcoxon rank-sum test because the samples are independent, the data is ordinal, and a qq plot (figure 2) confirmed a non-normal distribution. 
+The QQ plot (Figure 2) visualizes the distribution of "misnowrk". The plot reveals a obvious skewness, with the data points significantly deviating from the reference line, confirming that the data does not follow a normal distribution.
+
+Given the non-normality, the Wilcoxon rank-sum test is selected for analysis. This test is appropriate because it does not assume normality in the data and is robust for ordinal data and independent samples. The test will compare the median number of affected workdays between two independent groups – those with good versus poor sleep quality – to determine if there is a statistically significant difference in the impact of mental health on workdays between these two sleep quality statuses.
 
 ```{r}
 data$sleep_well_binary <- ifelse(data$sleep_well == 'good', 1, 0)
@@ -390,12 +399,12 @@ mental_data %>%
 ```
 
 
-Based on table 2, with all three categorical variables having p-values less than 0.05, we concluded that there is an association between sleep quality and these variables. 
-The resulting p-value for misnowrk was found to be less than 0.05, leading us to conclude a significant difference between the distributions of both populations.
+A p-value of less than 0.05 was observed across all tests, indicating a statistically significant association between each of the mental factors and sleep quality. Specifically, for the categorical variables "mistmnt" (currently receiving mental health treatment), "misphlpf" (level of agreement on empathy), and "mishopls" (level of hopelessness), the Chi-Square test was utilized given the categorical nature of these variables and the large sample size.
+For the numeric variable "misnowrk" (number of workdays affected by mental health issues), the Wilcoxon rank-sum test was chosen due to the non-normal distribution of the data as confirmed by the QQ plot analysis (Figure 2). The significant p-value suggests that there is a difference in the median number of affected workdays when comparing individuals with good versus poor sleep quality.
 
 #### Sociodemograohic Factors
 
-To analyze sociodemograohic factors ("sex",  "x_educag", "x_incomg", "x_bmi5cat", "veteran"), We still use stacked bar charts (figure 3) to show the proportion of each category show distinct differences between categories. For example, the "level of education VS. Sleep Quality" and "Income VS. Sleep Quality" plot shows an increasing linear trend, where the percentage of people sleeping quality for the proportion of sleep better in the left bar is less than in the right bar. The "BMI VS. Sleep Quality" show an non-linear trend, and for this type of plot, we will analyze it further by using logistic regression models. However, bar charts for sex and veteran3 variables are not effective at showing differences. 
+
 
 ```{r, fig.height= 9, fig.width=9}
 # Remove legends from all plots except one (for example, keep the legend in p5)
@@ -420,7 +429,18 @@ combined_plot1 +
   theme(legend.position = "top")
 ```
 
-To address this, we used mosaic charts (figure 4). This plot shows that among males and veterans, there is a relatively higher proportion of poor sleep compared to other sleep levels. Also, among veterans, there is a relatively lower proportion of good sleep compared to other sleep levels.
+Following the analysis of mental health factors, the study explored sociodemographic influences on sleep quality. Stacked bar charts provided initial insights into the proportional differences in sleep quality across various sociodemographic categories (Figure 3).
+
+Education and Income Trends
+An increasing trend was observed in the "Level of Education vs. Sleep Quality" chart, where a higher level of education was associated with a greater proportion of individuals reporting good sleep quality. A similar trend was evident in the "Income vs. Sleep Quality" chart, suggesting that higher income levels might correlate with better sleep quality.
+
+BMI and Sleep Quality
+Contrastingly, the "BMI vs. Sleep Quality" chart revealed a non-linear trend. The proportion of individuals reporting good sleep quality did not increase consistently across BMI categories, indicating a more complex relationship that is similar to the quadratic trend observed in the level of agreement on empathy.
+
+Gender and Military Experience
+The analysis of gender and military experience using stacked bar charts did not demonstrate a clear distinction in sleep quality proportions between different categories. The relationship between these sociodemographic factors and sleep quality need to be further examination.
+
+
 
 ```{r, fig.width=9}
 # mosaic plot
@@ -439,8 +459,12 @@ mtext("Figure 4: Mosaic Plots for Veteran and Gender by Sleep Quality. In mosaic
       side = 1, outer = TRUE, line = 0, cex = 0.8)
 ```
 
-For all four categorical variables, with expected values larger than 5, the Chi-square test is valid. In table 3,
-all p-values are less than 0.05, we reject the null hypothesis and conclude that there is an association between sociodemographic factors and sleep quality.
+Mosaic plots were utilized for further analysis (Figure 4). These plots show associations between sleep quality and both gender and veteran status. The blue area for males shows a higher proportion of poor sleep quality was observed. Similarly, veterans have lower proportion of good sleep quality. 
+
+The findings from the mosaic plots suggest that being male or a veteran is associated with variations in sleep quality, with both groups showing a higher likelihood of experiencing poor sleep. 
+
+For all four categorical variables, with expected values larger than 5, the Chi-square test is more suitable (See Appendix 1). 
+In table 3, all p-values are less than 0.05, we reject the null hypothesis and conclude that there is an association between all sociodemographic factors and sleep quality.
 
 ```{r}
 social_data <- data.frame(
@@ -454,7 +478,7 @@ social_data %>%
   kable_classic(full_width = F, html_font = "Cambria") 
 ```
 
-In conclusion, the analyses showed significant associations between sleep qualify and various factors. 
+In conclusion, the analyses showed significant associations between sleep qualify and all factors we tested in this study. 
 
 
 ### Binary Logistic Regression
