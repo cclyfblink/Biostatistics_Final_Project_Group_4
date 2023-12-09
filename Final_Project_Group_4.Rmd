@@ -570,7 +570,7 @@ The regression model showed no difference after the backward stepwise filtering 
 
 ### Model Fit Analysis
 
-```{r}
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 # Perform the Hosmer-Lemeshow test
 hoslem.test(y = model$fitted.values, x = model$model$sleep_well_binary, g = 10)
 
@@ -645,21 +645,23 @@ These results suggest that both mental health and sociodemographic factors play 
 
 
 ## Conclusion
-Our study offers a comprehensive analysis of how various sociodemographic and mental health factors are associated with the odds of achieving better sleep among the U.S. population aged between 18 to 64. The findings underscore the complexity of sleep quality determinants, revealing significant relationships with mental health aspects and sociodemographic factors.
 
-### Broader Implications:
-This study highlights the importance of a holistic view of sleep quality, emphasizing the complex interaction between mental health and sociodemographic factors. Such an understanding is crucial for developing comprehensive sleep management strategies, moving beyond traditional single-factor treatment models and incorporating a more integrated approach in clinical and public health settings.
+The analysis of the BRFSS 2013 dataset has discovered how various mental health and sociodemographic factors are associated with sleep quality among young adults and adults in the United States. The study's main findings indicate that factors such as feelings of hopelessness, education level, income, gender, and veteran status all play a significant role in determining sleep quality with directly linear association. Notably, higher levels of education and income are consistently associated with better sleep quality, while increased feelings of hopelessness and being a veteran are linked with poorer sleep outcomes. Gender differences also appear, with males reporting lower sleep quality than females.
 
-### Potential Applications:
-The findings provide valuable insights for healthcare providers, allowing for targeted interventions based on individuals' mental and sociodemographic profiles. Additionally, these insights can inform public health initiatives and policy development, focusing on improving sleep health through mental health support and addressing socio-economic factors.
+The non-linear relationships observed for some variables, such as BMI and the perception of empathy impact sleep quality, highlighting the importance for people to keep these index within a suitable range. 
 
-### Recommendations for Future Research:
-Future studies should aim to establish causal links between the identified factors and sleep quality, expanding upon the observational nature of this study. Longitudinal research and broader variable inclusion can deepen the understanding of sleep quality determinants. Diversifying data sources would also enhance the findings' applicability across various populations.
+Interestingly, the mental health treatment did not show a significant association with sleep quality in the logistic regression model, contrasting with the results from the Chi-square test. This difference may be due to the complexity of the relationship between mental health care and sleep quality and underscores the importance of model choice in statistical analyses.
 
-For the purposes of this study, we have chosen to concentrate on a binary classification of sleep quality. This decision provides valuable insights into the factors affecting high sleep quality. However, it is worth noting that if future research endeavors delve into analyzing the factors contributing to long or short sleep durations, it may be beneficial to further categorize the outcome variable into three classes. 
+### Broader Implications
+Our analysis highlights the need for a multifaceted perspective on sleep quality research. Such comprehensive insights are valuable for sleep management strategies that are more useful than single-variable or single-aspect models. It offers a potential improvement direction in both clinical practice and public health frameworks, like design different kinds of sleep illness treatment by patients mental status. For example, different treatment can be applied based on whether they are receiving mental illness treatment. These results aimed at enhancing sleep health by providing mental health support and mitigating adverse socioeconomic influences.
 
-### Limitations and Considerations:
-The study's limitations include potential selection bias due to a low survey response rate and the assumptions inherent in ordinal encoding of categorical variables. These factors may affect the generalizability of the findings and should be considered in interpreting the results. Future research should account for these limitations to refine our understanding of sleep quality determinants.
+### Future Direction
+Subsequent research should strive to delineate the causal relationships implicated by the current findings, thereby transcending the observational constraints of this study. Longitudinal designs would provide a more reliable dataset, coupled with a more expansive array of variables, could offer a deeper comprehension of the factors influencing sleep quality. 
+
+While we have chosen to concentrate on a binary classification of sleep quality and got significant result, it is worth noting that it may be beneficial to further categorize the outcome variable into three classes, including less sleep time, good sleep time and more sleep time. This would be helpful for future research focusing on analyzing the factors contributing to long or short sleep durations, . 
+
+### Limitations and Considerations
+This study is not devoid of limitations. Selection bias that are from a modest response in this questionnaire and some unknown implications of encoding categorical variables ordinally must be acknowledged, as they may bear upon the findings' generalizability. These limitation causes a cautious interpretation of the results. Furthermore, although the sample size is large enough, the drop of all missing values and refused answers might limit the generalizability and relevance of the outcomes to a wider population. It is important for future studies to consider these limitations, thereby refining the understanding of the determinants of sleep quality.
 
 
 
@@ -685,7 +687,7 @@ Van Cauter, E. V. E., & Spiegel, K. (1999). Sleep as a mediator of the relations
 
 Appendix 1: Expected values for all categorical variables. 
 
-```{r}
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 # List to store the expected values
 expected_values_list <- list()
 
