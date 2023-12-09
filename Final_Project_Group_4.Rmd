@@ -90,7 +90,7 @@ In the final phase of model evaluation, we use two key metrics to evaluate the p
 This rigorous methodology enables us to comprehensively explore the relationships between various factors and sleep quality within our dataset, providing valuable insights into this critical health aspect.
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo =FALSE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo =FALSE, message = FALSE, warning = FALSE, cache = TRUE)
 ```
 
 ```{r,message=FALSE,echo=FALSE}
@@ -550,9 +550,8 @@ output <- model %>% tidy()
 cbinded <- cbind(output, confint(model))[,-1] %>% round(3)
 # Knit the table to latex format
 cbinded %>%
-  kbl(caption = "<b>Table 4:</b> Binary Logistic Regression Analysis with 95% CI") %>%
-  kable_classic(full_width = F, html_font = "Cambria") %>%
-  column_spec(1, bold = TRUE)
+  kbl(caption = "Table 4: Binary Logistic Regression Analysis with 95% CI") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
 ```
 
 From Figure 1 and 3, the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
@@ -618,7 +617,7 @@ From these assessments, it is inferred that the model is not sufficiently refine
 
 
 
-### Key Findings from The Logistic Regression Analysis
+### Key Findings from the Binary Logistic Regression Analysis
 
 Mental Health Variables:
 
