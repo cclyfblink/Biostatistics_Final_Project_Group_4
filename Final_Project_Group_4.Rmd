@@ -242,7 +242,6 @@ data <- brfss_sleep_mental
 
 ## Results
 
-
 ```{r}
 table1 <- data %>%
   select(mistmnt, misphlpf, mishopls, misnowrk, sex, x_educag, x_incomg, veteran3, x_bmi5cat, sleep_well) %>%
@@ -275,13 +274,13 @@ table1 <- data %>%
   modify_caption("Table 1: Sociodemographic and Mental Factors by Sleep Quality") %>%
   as_kable_extra(booktabs = TRUE) %>%
   # reduce font size to make table fit. 
-  # you may also use the `latex_options = "scale_down"` argument here.
   kable_classic(full_width = T, html_font = "Cambria") 
 table1
 ```
 
 We first provide a preliminary summary of the data using the tableone (table 1) to help determine which independent variables might be related to the dependent variables. In this table, we categorised sleep quality into two categories: "bad (N = 7045)" and "good (N = 12591)", looking at the difference between good and bad sleep quality for each mental and Sociodemographic factors. By observing the P-value, it can be found that there is a significant association between the above nine variables and sleep quality (p < 0.001).
 
+At the same time, based on table 1, all groups have relatively normal sample size, without extreme skew trend and small or large value in a single group. This ensures the analysis below are reliable, allowing using proportion in visualization part.
 
 ### Visualize and Test the Association
 
@@ -570,39 +569,43 @@ The regression model showed no difference after the backward stepwise filtering 
 
 ### Model Fit Analysis
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
+```{r}
 # Perform the Hosmer-Lemeshow test
-hoslem.test(y = model$fitted.values, x = model$model$sleep_well_binary, g = 10)
+hoslem_test_result <- hoslem.test(y = model$fitted.values, x = model$model$sleep_well_binary, g = 10)
 
 # Compute the ROC curve and AUC
 roc_curve <- roc(response = model$y, predictor = fitted(model))
 auc_value <- auc(roc_curve)
 
-# Print the AUC
-print(auc_value)
-
-# Extract and print the Residual Deviance
+# Extract the Residual Deviance
 residual_deviance <- deviance(model)
-cat("Residual Deviance:", residual_deviance, "\n")
 
-# Extract and print the AIC
+# Extract the AIC
 aic_value <- AIC(model)
-cat("AIC:", aic_value, "\n")
 
-# Print the summary of the model to get detailed information
+# Extract degrees of freedom from the model summary
 model_summary <- summary(model)
-
-# Extract degrees of freedom
 residual_dof <- model_summary$df.residual
 null_dof <- model_summary$df.null
 
-# Print the degrees of freedom
-cat("Residual Degrees of Freedom:", residual_dof, "\n")
-cat("Null Degrees of Freedom:", null_dof, "\n")
+# Compile results into a data frame with formatted values
+results_df <- data.frame(
+  Statistic = c("Hosmer-Lemeshow Test Chi-Square", "Hosmer-Lemeshow Test P-Value", "AUC", 
+                "Residual Deviance", "AIC", "Residual Degrees of Freedom", "Null Degrees of Freedom"),
+  Value = format(round(c(hoslem_test_result$statistic, hoslem_test_result$p.value, auc_value, 
+            residual_deviance, aic_value, residual_dof, null_dof), 2), scientific = FALSE)
+)
+
+# Convert the data frame to a kable format and apply styling
+results_table <- kable(results_df, format = "html", booktabs = TRUE) %>%
+                 kable_styling(full_width = TRUE, html_font = "Cambria")
+
+# Print the table
+print(results_table)
 ```
 
 **Hosmer and Lemeshow Goodness of Fit Test**
-The fit of the statistical model was first assessed using the Hosmer and Lemeshow Goodness of Fit Test. This test resulted in an chi-squared value of 13.349 with 8 degrees of freedom, and a p-value of 0.1004. This suggests that the observed values and the model's predictions do not significantly differ, indicating a reasonable fit to the data. However, it's important to note that relying solely on the p-value does not fully encapsulate the model's overall fit.
+The fit of the statistical model was first assessed using the Hosmer and Lemeshow Goodness of Fit Test. This test resulted in an chi-squared value of 13.35 with 8 degrees of freedom, and a p-value of 0.1004. This suggests that the observed values and the model's predictions do not significantly differ, indicating a reasonable fit to the data. However, it's important to note that relying solely on the p-value does not fully encapsulate the model's overall fit.
 
 **Residual Deviance vs. Residual Degrees of Freedom**
 A further evaluation involved comparing the model's Residual Deviance against its Residual Degrees of Freedom. Typically, a smaller difference between these two values indicates a better fit. In this analysis, a noticeable difference was found, pointing towards potential room for improvement in the model’s fit.
@@ -685,34 +688,60 @@ Van Cauter, E. V. E., & Spiegel, K. (1999). Sleep as a mediator of the relations
 
 Appendix 1: Expected values for all categorical variables. 
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
-# List to store the expected values
-expected_values_list <- list()
+```{r, echo=FALSE, results='asis'}
+# Initialize two lists to store the kable formatted tables
+observed_tables_list <- list()
+expected_tables_list <- list()
 
-# Function to calculate expected values and add them to the list
-calculate_expected_values <- function(table) {
-  expected_values <- chisq.test(table)$expected
-  return(expected_values)
+# Function to convert a table to kable format and apply specified styling
+convert_to_kable <- function(table) {
+  kable_table <- kable(table, format = "html", booktabs = TRUE) %>%
+                 kable_classic(full_width = TRUE, html_font = "Cambria")
+  return(kable_table)
 }
 
-# Contingency tables and expected values
+# Define your contingency tables and calculate expected values
 tables_and_expected <- list(
   mistmnt = xtabs(~ sleep_well + mistmnt, data = data_combine),
-  misphlp = xtabs(~ sleep_well + misphlpf, data = data_combine),
+  misphlpf = xtabs(~ sleep_well + misphlpf, data = data_combine),
   mishopls = xtabs(~ sleep_well + mishopls, data = data_combine),
   sex = xtabs(~ sleep_well + sex, data = data_combine),
-  X_educag = xtabs(~ sleep_well + x_educag, data = data_combine),
-  X_incomg = xtabs(~ sleep_well + x_incomg, data = data_combine),
-  X_bmi5cat = xtabs(~ sleep_well + x_bmi5cat, data = data_combine),
+  x_educag = xtabs(~ sleep_well + x_educag, data = data_combine),
+  x_incomg = xtabs(~ sleep_well + x_incomg, data = data_combine),
+  x_bmi5cat = xtabs(~ sleep_well + x_bmi5cat, data = data_combine),
   veteran3 = xtabs(~ sleep_well + veteran3, data = data_combine)
 )
 
-# Calculate and store expected values in the list
+# Process each table
 for (table_name in names(tables_and_expected)) {
-  expected_values_list[[table_name]] <- calculate_expected_values(tables_and_expected[[table_name]])
+  # Store the observed table in kable format
+  observed_tables_list[[table_name]] <- convert_to_kable(tables_and_expected[[table_name]])
+
+  # Calculate, round, and store the expected table in kable format
+  expected_values <- round(chisq.test(tables_and_expected[[table_name]])$expected)
+  expected_tables_list[[table_name]] <- convert_to_kable(as.table(expected_values))
 }
 
-# Print the list of expected values
-print(expected_values_list)
+# Variable descriptions
+variable_descriptions <- list(
+  mistmnt = "**MISTMNT**(Binary): Currently receiving mental health treatment or not.",
+  misphlpf = "**MISPHLPF**(Ordinal): The level of recognition of others' empathy.",
+  mishopls = "**MISHOPLES** (Ordinal): The degree of hopelessness experienced.",
+  sex = "**Sex**(Binary): Female =1, Male =0.",
+  x_educag = "**X_EDUCA**(Categorical): The level of the highest level of education.",
+  x_incomg = "**X_INCOMG**(Categorical): The level of income.",
+  x_bmi5cat = "**X_BMI5CAT**(Categorical): The category of BMI.",
+  veteran3 = "**VETERAN3** (Binary): Have military experience or not."
+)
+
+# Print both observed and expected tables with descriptions
+for (table_name in names(observed_tables_list)) {
+  cat(variable_descriptions[[table_name]], "\n")
+  cat("\nObserved Values:\n")
+  print(observed_tables_list[[table_name]], row.names = FALSE)
+  cat("\nExpected Values:\n")
+  print(expected_tables_list[[table_name]], row.names = FALSE)
+  cat("\n\n")  # Add blank lines for readability
+}
 ```
 
