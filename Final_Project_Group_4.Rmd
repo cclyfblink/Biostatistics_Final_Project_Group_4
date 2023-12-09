@@ -460,6 +460,9 @@ In conclusion, the analyses showed significant associations between sleep qualif
 
 The binary logistic regression model provided insightful results regarding the association between various sociodemographic and mental health factors and the probability of experiencing better sleep among U.S. young adults and adults.
 
+```{r message=FALSE, warning=FALSE, echo=FALSE, include = FALSE}
+model_linear <- glm(sleep_well_binary ~ mistmnt + misphlpf + mishopls + misnowrk + sex + x_educag + x_incomg + veteran3 +  x_bmi5cat, data = data, family =  binomial(link="logit"))
+```
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 # Fit the binary logistic regression model
