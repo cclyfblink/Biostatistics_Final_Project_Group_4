@@ -615,7 +615,7 @@ From these assessments, it is inferred that the model is not sufficiently refine
 
 
 
-### Key Findings from The Logistic Regression Analysis
+### Key Findings from the Binary Logistic Regression Analysis
 
 Mental Health Variables:
 
