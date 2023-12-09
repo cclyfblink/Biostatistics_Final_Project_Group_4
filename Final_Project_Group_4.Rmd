@@ -1,5 +1,15 @@
-# Final Report
+---
+title: "Final Project Report Group 4"
+author: "Hanbo Dong, Huiye Han, Yifan Lu, Zhuoran Li"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    fig_height: 4.5
+    fig_width: 8
 
+---
 ## Introduction
 
 This report investigates a critical public health question: "What mental and sociodemographic factors were significantly associated with sleep quality among young adults and adults in the United States in 2013?" Sleep is a crucial component of overall health, impacting physical, mental, and emotional well-being (Bixler, 2009). The focus on this question is not only academically significant but also of important clinical relevance. Poor sleep has been increasingly problematic in the American population (Knutson et al., 2010). Revealing specific risk factors can guide the development of tailored treatments and interventions, based on patients' mental and social status.
@@ -461,6 +471,8 @@ In conclusion, the analyses showed significant associations between sleep qualif
 ### Binary Logistic Regression
 
 The binary logistic regression model provided insightful results regarding the association between various sociodemographic and mental health factors and the probability of experiencing better sleep among U.S. young adults and adults.
+
+
 
 ```{r}
 # process data for regression
