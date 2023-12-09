@@ -22,7 +22,7 @@ Our dataset comprises nine independent variables encompassing sociodemographic a
 
 The variables include:
  
-#### Sociodemographic factors
+#### Mental factors
 
 **MISTMNT**(Binary): Currently receiving mental health treatment or not.
 
@@ -32,7 +32,7 @@ The variables include:
 
 **MISNOWRK** (Numerical): The number of workdays in a month impacted by mental illness.
  
-#### Mental factors
+#### Sociodemographic factors 
 
 **Sex**(Binary): Female =1, Male =0
 
@@ -343,10 +343,9 @@ final_plot <- combined_plot +
 print(final_plot)
 ```
 
-In mental factors, there are three categorical variables, including "currently receiving mental health treatment or not", "the level of agreement regarding whether people around them would provide care for those with mental illness", "the degree of hopelessness experienced" ("mistmnt", "misphlpf", and "mishopls") and one numeric variable, the number of workdays in a month impacted by mental illness ("misnowrk"). Stacked bar charts (figure 1) show the proportion of each category were created for all variables to illustrate the differences between categories. The "Treatment Condition VS. Sleep Quality" and "Hopeless Level VS. Sleep Quality" plots show a decreasing linear trend, indicating that for people undergoing mental health treatment or having highest level of hopelessness have relatively worse sleep quality. Others show an non-linear trend. Those who moderately agreed a mental problem that would be of concern had better sleep quality, while those who agreed it at all or not at all had relatively poor sleep quality. This is a clear quadratic term trend, where the highest or lowest point occurs in the center of the distribution. 
+In mental factors, there are three categorical variables, including "currently receiving mental health treatment or not", "the level of agreement regarding whether people around them would provide care for those with mental illness", "the degree of hopelessness experienced" ("mistmnt", "misphlpf", and "mishopls") and one numeric variable, the number of workdays in a month impacted by mental illness ("misnowrk"). Stacked bar charts (figure 1) show the proportion of each category were created for all variables to illustrate the differences between categories. The "Treatment Condition VS. Sleep Quality" and "Hopeless Level VS. Sleep Quality" plots show a decreasing linear trend, indicating that for people undergoing mental health treatment or having highest level of hopelessness have relatively worse sleep quality. Others show an non-linear trend. Those who moderately agreed that people with mental problem would be cared had better sleep quality, while those who agreed it at all or not at all had relatively poor sleep quality. This is a clear quadratic term trend, where the highest or lowest point occurs in the center of the distribution. 
 
 To test the association between the two variables, chi-squared tests were chosen for the categorical variables (mistmnt, misphlpf, and mishopls) due to a sufficiently large sample size and expected values larger than 5. 
-
 
 For the number of affected workdays, it is obviously not normally distributed shown by the bar plot. The normality is further tested by the qqplot below.
 
