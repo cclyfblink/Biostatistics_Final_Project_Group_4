@@ -478,11 +478,14 @@ cbinded %>%
 Table 8: Binary Logistic Regression Output
 
 
-Given barcharts from table 2 and 5, the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
+From barcharts from table 2 and 5, the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
+```{r message=FALSE, warning=FALSE, echo=FALSE, include = FALSE}
+adjusted <- step(model, direction = "backward")
+summary(adjusted)
+```
+
 The regression model showed no difference after the backward stepwise filtering method.
 
-Given [BARCHART], the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
-The regression model showed no difference after the backward stepwise filtering method.
 
 
 ### Model Fit Analysis
