@@ -470,18 +470,17 @@ output <- model %>% tidy()
 cbinded <- cbind(output, confint(model))[,-1] %>% round(3)
 # Knit the table to latex format
 cbinded %>%
-  kbl(caption = "<b>Table 8:</b> Binary Logistic Regression Analysis with 95% CI") %>%
+  kbl(caption = "<b>Table 4:</b> Binary Logistic Regression Analysis with 95% CI") %>%
   kable_classic(full_width = F, html_font = "Calibri") %>%
   column_spec(1, bold = TRUE)
 ```
 
-Table 8: Binary Logistic Regression Output
-
-
-From barcharts from table 2 and 5, the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
+From barcharts in table 2 and 5, the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
 ```{r message=FALSE, warning=FALSE, echo=FALSE, include = FALSE}
 adjusted <- stats::step(model, direction = "backward")
+summary(adjusted)
 ```
+
 
 The regression model showed no difference after the backward stepwise filtering method.
 
