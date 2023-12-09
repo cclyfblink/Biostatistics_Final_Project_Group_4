@@ -475,7 +475,7 @@ cbinded %>%
   column_spec(1, bold = TRUE)
 ```
 
-From barcharts in table 2 and 5, the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
+From Figure 1 and 3, the trend of **MISPHLPF** and **X_BMI5CAT** are not monotonic. Therefore, quadratic terms were introduced in the binary logistic regression model.
 ```{r message=FALSE, warning=FALSE, echo=FALSE, include = FALSE}
 adjusted <- stats::step(model, direction = "backward")
 summary(adjusted)
