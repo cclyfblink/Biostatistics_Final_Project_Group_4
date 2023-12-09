@@ -612,7 +612,7 @@ From these assessments, it is inferred that the model is not sufficiently refine
 
 
 
-### Key findings from the logistic regression analysis include:
+### Key Findings from The Logistic Regression Analysis
 
 Mental Health Variables:
 
@@ -636,6 +636,7 @@ Sociodemographic Variables:
 
 **BMI** (x_bmi5cat): The relationship between BMI and sleep quality is non-linear. An increase in BMI initially corresponds with higher odds of better sleep, up to a certain point, after which the odds decrease, particularly in higher BMI categories.
 
+These results suggest that both mental health and sociodemographic factors play significant roles in sleep quality, but Mental Health Treatment variable is not significant and performs well in this logistic regression model, which is different from the result of Chi-square test.
 
 
 ## Conclusion
