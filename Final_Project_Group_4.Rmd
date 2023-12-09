@@ -108,6 +108,7 @@ library(broom)
 library(ResourceSelection)
 library(pROC)
 library(tidyr)
+library(car)
 ```
 
 ```{r, echo=FALSE}
@@ -374,16 +375,20 @@ Numeric Variable
 The variable representing the number of workdays affected by mental health issues (misnowrk) was initially assessed with a bar chart, which indicated a non-normal distribution. This was further evidenced by a subsequent QQ-plot analysis.
 
 ```{r}
-# Increase the bottom margin to make space for the caption
-par(mar = c(5, 4, 4, 2) + 0.1)
+# Set the margin and allow plotting outside the plot region
+par(mar = c(5, 4, 4, 2) + 0.1, xpd = TRUE)
 
 # Create the QQ plot
-qqnorm(data$misnowrk, main = "", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", cex.main = 1, font.main = 1.5)
+qqnorm(data$misnowrk, main = "", xlab = "", ylab = "Sample Quantiles", cex.main = 1, font.main = 1.5)
 qqline(data$misnowrk, col = 2)
 
 # Add caption at the bottom of the plot
-mtext("Figure 2: QQ Plot of misnowrk. The Q-Q plot exhibits skewness, indicating that the data does not follow a normal distribution.", 
-      side = 1, line = 2, adj = 0, font = 1.5, cex = 0.8)
+mtext("Figure 2: QQ Plot of misnowrk. The Q-Q plot deviates from the line, suggesting that the variable misnowrk \ndoes not adhere to a normal distribution.", 
+      side = 1, line = 4, adj = 0, font = 1.5, cex = 0.8)
+
+# Move up the x-axis label
+mtext("Theoretical Quantiles", side = 1, line = 2, adj = 0.5, font = 1, cex = 1.2)
+
 ```
 
 The QQ plot (Figure 2) visualizes the distribution of "misnowrk". The plot reveals a obvious skewness, with the data points significantly deviating from the reference line, confirming that the data does not follow a normal distribution.
@@ -463,7 +468,7 @@ The analysis of gender and military experience using stacked bar charts did not 
 
 
 
-```{r, fig.width=9}
+```{r, fig.height= 6,fig.width=9}
 # mosaic plot
 library(gridExtra)
 library(grid)
@@ -676,5 +681,38 @@ Krueger, P. M., & Friedman, E. M. (2009). Sleep duration in the United States: a
 
 Van Cauter, E. V. E., & Spiegel, K. (1999). Sleep as a mediator of the relationship between socioeconomic status and health: a hypothesis. Annals of the New York Academy of Sciences, 896(1), 254-261.
 
+## Appendix 
 
+Appendix 1: Expected values for all categorical variables. 
+
+```{r}
+# List to store the expected values
+expected_values_list <- list()
+
+# Function to calculate expected values and add them to the list
+calculate_expected_values <- function(table) {
+  expected_values <- chisq.test(table)$expected
+  return(expected_values)
+}
+
+# Contingency tables and expected values
+tables_and_expected <- list(
+  mistmnt = xtabs(~ sleep_well + mistmnt, data = data_combine),
+  misphlp = xtabs(~ sleep_well + misphlpf, data = data_combine),
+  mishopls = xtabs(~ sleep_well + mishopls, data = data_combine),
+  sex = xtabs(~ sleep_well + sex, data = data_combine),
+  X_educag = xtabs(~ sleep_well + x_educag, data = data_combine),
+  X_incomg = xtabs(~ sleep_well + x_incomg, data = data_combine),
+  X_bmi5cat = xtabs(~ sleep_well + x_bmi5cat, data = data_combine),
+  veteran3 = xtabs(~ sleep_well + veteran3, data = data_combine)
+)
+
+# Calculate and store expected values in the list
+for (table_name in names(tables_and_expected)) {
+  expected_values_list[[table_name]] <- calculate_expected_values(tables_and_expected[[table_name]])
+}
+
+# Print the list of expected values
+print(expected_values_list)
+```
 
