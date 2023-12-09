@@ -552,7 +552,7 @@ cbinded <- cbind(output, confint(model))[,-1] %>% round(3)
 # Knit the table to latex format
 cbinded %>%
   kbl(caption = "<b>Table 4:</b> Binary Logistic Regression Analysis with 95% CI") %>%
-  kable_classic(full_width = F, html_font = "Calibri") %>%
+  kable_classic(full_width = F, html_font = "Cambria") %>%
   column_spec(1, bold = TRUE)
 ```
 
